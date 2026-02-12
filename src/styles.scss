@@ -1,0 +1,101 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$primary-palette: mat.define-palette((
+  50: #e3f2fd,
+  100: #bbdefb,
+  500: #003366,
+  700: #002244,
+  contrast: (
+    50: rgba(black, 0.87),
+    100: rgba(black, 0.87),
+    500: white,
+    700: white,
+  )
+));
+
+$accent-palette: mat.define-palette((
+  50: #e0f7fa,
+  100: #b2ebf2,
+  500: #55c1e6,
+  700: #4ab1d6,
+  contrast: (
+    50: rgba(black, 0.87),
+    100: rgba(black, 0.87),
+    500: white,
+    700: white,
+  )
+));
+
+$warn-palette: mat.define-palette(mat.$red-palette);
+
+$theme: mat.define-light-theme((
+  color: (
+    primary: $primary-palette,
+    accent: $accent-palette,
+    warn: $warn-palette,
+  ),
+  typography: mat.define-typography-config(),
+  density: 0,
+));
+
+@include mat.all-component-themes($theme);
+
+/* Global Styles */
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  overscroll-behavior-y: none;
+}
+
+body {
+  background-color: #f5f5f5;
+}
+
+/* Utility Classes */
+.hidden {
+  display: none !important;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
