@@ -7,6 +7,7 @@ import {
 import { Observable, map, take } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
+import { StorageService } from '../services/storage.service';
 
 export const authGuard: CanActivateFn = ():
   | Observable<boolean | UrlTree>
@@ -15,10 +16,17 @@ export const authGuard: CanActivateFn = ():
   | UrlTree => {
 
   const authService = inject(AuthService);
+  const storageService = inject(StorageService);
   const router = inject(Router);
 
-  if (authService.isAuthenticated()) {
+  if (authService.isAuthenticated() && storageService.isSessionValid()) {
     return true;
   }
+
+  // Clean up potential invalid state
+  if (!storageService.isSessionValid()) {
+    authService.logout();
+  }
+
   return router.createUrlTree(['/login']);
 };

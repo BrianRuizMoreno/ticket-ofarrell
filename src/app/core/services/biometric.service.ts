@@ -10,6 +10,12 @@ export class BiometricService {
             return false;
         }
 
+        // Biometrics require a secure context (HTTPS or localhost)
+        if (!window.isSecureContext) {
+            console.warn('Biometrics not available: insecure context (HTTP).');
+            return false;
+        }
+
         try {
             return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         } catch (e) {
@@ -58,7 +64,7 @@ export class BiometricService {
                 const idBase64 = this.bufferToBase64(credential.rawId);
                 localStorage.setItem(`bio_id_${cleanUsername}`, idBase64);
                 localStorage.setItem(`bio_enabled_${cleanUsername}`, 'true');
-                console.log(`Biometric registered for ${cleanUsername}`);
+                console.log(`Biometric registered successfully`);
                 return true;
             }
             return false;
