@@ -399,6 +399,7 @@ export class LoginPage implements OnInit {
   readonly hidePassword = signal<boolean>(true);
   readonly isLoading = signal<boolean>(false);
   readonly biometricAvailable = signal<boolean>(false);
+  readonly biometricFailed = signal<boolean>(false);
   readonly lastUsername = signal<string>(localStorage.getItem('last_success_user') || '');
   readonly error = signal<AuthError | null>(null);
 
@@ -447,6 +448,7 @@ export class LoginPage implements OnInit {
         });
       }
     } else {
+      this.biometricFailed.set(true);
       this.error.set({
         code: 'BIO_ERROR',
         message: 'No se pudo validar la biometría o no está registrada.',
@@ -472,11 +474,21 @@ export class LoginPage implements OnInit {
         const cleanUsername = username.trim();
         localStorage.setItem('last_success_user', cleanUsername);
 
-        if (this.biometricAvailable() && localStorage.getItem(`bio_enabled_${cleanUsername}`) !== 'true') {
-          if (confirm('¿Desea habilitar el acceso con biometría (Huella/Cara) para la próxima vez?')) {
+        // Check for specific failure or if never enabled
+        const isFirstTime = localStorage.getItem(`bio_enabled_${cleanUsername}`) !== 'true';
+        const hasFailed = this.biometricFailed();
+
+        if (this.biometricAvailable() && (isFirstTime || hasFailed)) {
+          const message = hasFailed
+            ? 'Detectamos problemas con su huella. ¿Desea re-configurarla ahora?'
+            : '¿Desea habilitar el acceso con biometría (Huella/Cara) para la próxima vez?';
+
+          if (confirm(message)) {
             this.biometricService.register(cleanUsername).then(registered => {
               if (registered) {
                 localStorage.setItem(`bio_key_${cleanUsername}`, password);
+                // Reset failure flag
+                this.biometricFailed.set(false);
               }
             });
           }

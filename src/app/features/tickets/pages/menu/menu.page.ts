@@ -147,6 +147,7 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       min-height: 100vh;
       background-color: #f5f5f5;
       padding: 16px;
+      padding-top: calc(16px + env(safe-area-inset-top));
       display: flex;
       flex-direction: column;
       gap: 16px;
