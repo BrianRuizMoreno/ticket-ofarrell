@@ -75,8 +75,7 @@ export class BiometricService {
                 userVerification: 'preferred',
                 allowCredentials: [{
                     id: rawId,
-                    type: 'public-key',
-                    transports: ['internal']
+                    type: 'public-key'
                 }]
             };
 
