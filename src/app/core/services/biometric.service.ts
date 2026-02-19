@@ -10,11 +10,19 @@ export class BiometricService {
             return false;
         }
 
-        return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        try {
+            return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        } catch (e) {
+            console.error('Error checking biometric availability:', e);
+            return false;
+        }
     }
 
     async register(username: string): Promise<boolean> {
         try {
+            const cleanUsername = username.trim();
+            if (!cleanUsername) return false;
+
             const challenge = new Uint8Array(32);
             window.crypto.getRandomValues(challenge);
 
@@ -28,8 +36,8 @@ export class BiometricService {
                 },
                 user: {
                     id: userId,
-                    name: username,
-                    displayName: username,
+                    name: cleanUsername,
+                    displayName: cleanUsername,
                 },
                 pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
                 authenticatorSelection: {
@@ -46,9 +54,11 @@ export class BiometricService {
             }) as PublicKeyCredential;
 
             if (credential) {
-                const idBase64 = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-                localStorage.setItem(`bio_id_${username}`, idBase64);
-                localStorage.setItem(`bio_enabled_${username}`, 'true');
+                // Robust storage of credential ID
+                const idBase64 = this.bufferToBase64(credential.rawId);
+                localStorage.setItem(`bio_id_${cleanUsername}`, idBase64);
+                localStorage.setItem(`bio_enabled_${cleanUsername}`, 'true');
+                console.log(`Biometric registered for ${cleanUsername}`);
                 return true;
             }
             return false;
@@ -61,11 +71,16 @@ export class BiometricService {
 
     async login(username: string): Promise<boolean> {
         try {
-            const idBase64 = localStorage.getItem(`bio_id_${username}`);
-            if (!idBase64) return false;
+            const cleanUsername = username.trim();
+            if (!cleanUsername) return false;
 
-            const rawId = new Uint8Array(atob(idBase64).split("").map(c => c.charCodeAt(0)));
+            const idBase64 = localStorage.getItem(`bio_id_${cleanUsername}`);
+            if (!idBase64) {
+                console.warn(`No biometric ID found for ${cleanUsername}`);
+                return false;
+            }
 
+            const rawId = this.base64ToBuffer(idBase64);
             const challenge = new Uint8Array(32);
             window.crypto.getRandomValues(challenge);
 
@@ -88,5 +103,24 @@ export class BiometricService {
             console.error('Biometric login error:', e);
             return false;
         }
+    }
+
+    private bufferToBase64(buffer: ArrayBuffer): string {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return window.btoa(binary);
+    }
+
+    private base64ToBuffer(base64: string): ArrayBuffer {
+        const binary_string = window.atob(base64);
+        const len = binary_string.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binary_string.charCodeAt(i);
+        }
+        return bytes.buffer;
     }
 }

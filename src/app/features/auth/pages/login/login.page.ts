@@ -421,8 +421,17 @@ export class LoginPage implements OnInit {
   }
 
   async loginBiometric() {
-    const username = this.loginForm.getRawValue().username || this.lastUsername();
-    if (!username) return;
+    const rawUsername = this.loginForm.getRawValue().username || this.lastUsername();
+    const username = rawUsername ? rawUsername.trim() : '';
+
+    if (!username) {
+      this.error.set({
+        code: 'BIO_ERROR',
+        message: 'Ingrese un usuario para usar biometría.',
+        statusCode: 0
+      });
+      return;
+    }
 
     const success = await this.biometricService.login(username);
     if (success) {
@@ -437,6 +446,12 @@ export class LoginPage implements OnInit {
           statusCode: 0
         });
       }
+    } else {
+      this.error.set({
+        code: 'BIO_ERROR',
+        message: 'No se pudo validar la biometría o no está registrada.',
+        statusCode: 0
+      });
     }
   }
 
@@ -454,13 +469,14 @@ export class LoginPage implements OnInit {
     this.authService.login(username, password).subscribe({
       next: () => {
         this.isLoading.set(false);
-        localStorage.setItem('last_success_user', username);
+        const cleanUsername = username.trim();
+        localStorage.setItem('last_success_user', cleanUsername);
 
-        if (this.biometricAvailable() && localStorage.getItem(`bio_enabled_${username}`) !== 'true') {
+        if (this.biometricAvailable() && localStorage.getItem(`bio_enabled_${cleanUsername}`) !== 'true') {
           if (confirm('¿Desea habilitar el acceso con biometría (Huella/Cara) para la próxima vez?')) {
-            this.biometricService.register(username).then(registered => {
+            this.biometricService.register(cleanUsername).then(registered => {
               if (registered) {
-                localStorage.setItem(`bio_key_${username}`, password);
+                localStorage.setItem(`bio_key_${cleanUsername}`, password);
               }
             });
           }
