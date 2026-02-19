@@ -448,10 +448,14 @@ export class LoginPage implements OnInit {
         });
       }
     } else {
+      // Aggressive cleanup to force re-registration
+      localStorage.removeItem(`bio_id_${username}`);
+      localStorage.removeItem(`bio_enabled_${username}`);
+
       this.biometricFailed.set(true);
       this.error.set({
         code: 'BIO_ERROR',
-        message: 'No se pudo validar la biometría o no está registrada.',
+        message: 'No se pudo validar la biometría. Ingrese con contraseña para re-configurar.',
         statusCode: 0
       });
     }
