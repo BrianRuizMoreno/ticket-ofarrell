@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TicketStateService } from '../../../../core/services/ticket-state.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { LugarPredefinido } from '../../../../core/models/ticket.model';
 
 @Component({
@@ -82,6 +83,9 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
         </main>
         
         <footer class="card-footer">
+          <button type="button" class="link-button" (click)="logout()">
+            Cerrar Sesión (Cambiar Usuario)
+          </button>
           <p class="footer-brand">Physis es marca registrada de Physis Informatica S.R.L.</p>
         </footer>
 
@@ -341,11 +345,28 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       color: #d1d5db; /* text-gray-300 */
       margin-top: 0.25rem;
     }
+
+    .link-button {
+      background: none;
+      border: none;
+      color: #003366;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+      padding: 4px 8px;
+    }
+
+    .link-button:hover {
+      color: #002244;
+    }
   `]
 })
+
 export class SessionConfigPage {
   private readonly fb = inject(FormBuilder);
   private readonly ticketState = inject(TicketStateService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   readonly sessionForm = this.fb.nonNullable.group({
@@ -379,5 +400,8 @@ export class SessionConfigPage {
 
     this.router.navigate(['/tickets/menu']);
   }
-}
 
+  logout(): void {
+    this.authService.logout();
+  }
+}
