@@ -62,7 +62,7 @@ export class StorageService {
           archivo: null
         }))
       };
-      sessionStorage.setItem(this.TICKET_SESSION_KEY, JSON.stringify(serializableSession));
+      localStorage.setItem(this.TICKET_SESSION_KEY, JSON.stringify(serializableSession));
     } catch (e) {
       console.error('Error guardando ticket session:', e);
     }
@@ -70,7 +70,7 @@ export class StorageService {
 
   getTicketSession(): TicketSession | null {
     try {
-      const data = sessionStorage.getItem(this.TICKET_SESSION_KEY);
+      const data = localStorage.getItem(this.TICKET_SESSION_KEY);
       if (!data) return null;
       return JSON.parse(data) as TicketSession;
     } catch (e) {
@@ -80,7 +80,7 @@ export class StorageService {
   }
 
   clearTicketSession(): void {
-    sessionStorage.removeItem(this.TICKET_SESSION_KEY);
+    localStorage.removeItem(this.TICKET_SESSION_KEY);
   }
 
   addToOfflineQueue(payload: unknown): void {

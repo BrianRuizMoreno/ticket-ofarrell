@@ -5,6 +5,7 @@ import { Observable, throwError, of } from 'rxjs';
 import { catchError, tap, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../../enviroments/enviroment';
 import { StorageService } from './storage.service';
+import { TicketStateService } from './ticket-state.service';
 import {
   AuthResponse,
   LoginRequest,
@@ -25,6 +26,7 @@ export const SKIP_AUTH_INTERCEPTOR = new HttpContext().set(SKIP_AUTH_TOKEN, true
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly storage = inject(StorageService);
+  private readonly ticketState = inject(TicketStateService);
   private readonly router = inject(Router);
   private readonly API_URL = environment.apiUrl;
   private readonly SERIAL_ID = environment.serialId;
@@ -37,6 +39,11 @@ export class AuthService {
   readonly empresasDisponibles = computed(() => this.empresasSignal());
   readonly error = computed(() => this.errorSignal());
   readonly isAuthenticated = computed(() => this.userSignal() !== null);
+  readonly isClientUser = computed(() => this.userSignal()?.usuario?.tipo === 3);
+  readonly userName = computed(() => {
+    const u = this.userSignal()?.usuario;
+    return u?.nombre || u?.username || '';
+  });
   readonly requiresEmpresaSelection = computed(() =>
     this.statusSignal() === 'selecting_empresa'
   );
@@ -74,7 +81,12 @@ export class AuthService {
     if (response.empresa) {
       this.completeAuthentication(response);
       this.statusSignal.set('authenticated');
-      this.router.navigate(['/session-config']);
+
+      if (this.ticketState.hasSession()) {
+        this.router.navigate(['/tickets/menu']);
+      } else {
+        this.router.navigate(['/session-config']);
+      }
     } else if (response.empresasDisponibles && response.empresasDisponibles.length > 0) {
       this.empresasSignal.set(response.empresasDisponibles);
       this.statusSignal.set('selecting_empresa');
@@ -113,7 +125,12 @@ export class AuthService {
         this.completeAuthentication(response);
         this.statusSignal.set('authenticated');
         this.empresasSignal.set(null);
-        this.router.navigate(['/session-config']);
+
+        if (this.ticketState.hasSession()) {
+          this.router.navigate(['/tickets/menu']);
+        } else {
+          this.router.navigate(['/session-config']);
+        }
       }),
       catchError((error: HttpErrorResponse) => this.handleError(error))
     );
@@ -139,7 +156,7 @@ export class AuthService {
 
   logout(): void {
     this.storage.clearSession();
-    this.storage.clearTicketSession();
+    this.ticketState.clearSession();
     this.userSignal.set(null);
     this.empresasSignal.set(null);
     this.statusSignal.set('idle');

@@ -1,6 +1,6 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, inject, OnInit, signal, computed, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -9,14 +9,14 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 
-import { TicketStateService } from '../../../../services/ticket-state.service';
+import { TicketStateService } from '../../../../core/services/ticket-state.service';
 import {
   OCROriginalData,
   TicketModifiedData,
   TipoGasto,
   MetodoPago,
-  LugarPredefinido
 } from '../../../../core/models/ticket.model';
 
 interface FormState {
@@ -28,8 +28,8 @@ interface FormState {
 @Component({
   selector: 'app-form',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatInputModule,
     MatSelectModule,
@@ -37,16 +37,14 @@ interface FormState {
     MatCardModule,
     MatIconModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    PageHeaderComponent
   ],
   template: `
     <div class="app-container">
       <div class="main-card">
         
-        <header class="card-header">
-          <img src="https://physis.com.ar/wp-content/uploads/2025/02/physis.png" alt="Physis Logo" class="logo">
-          <h1 class="app-title">Cargador de Tickets</h1>
-        </header>
+        <app-page-header></app-page-header>
 
         <main class="card-body">
           <div class="form-header-row">
@@ -236,29 +234,7 @@ interface FormState {
       position: relative;
     }
 
-    /* Header */
-    .card-header {
-      background-color: #55c1e6;
-      padding: 1.5rem;
-      text-align: center;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
 
-    .logo {
-      width: 100px;
-      margin-bottom: 0.75rem;
-      filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07));
-    }
-
-    .app-title {
-      color: #003366;
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin: 0;
-    }
 
     /* Body */
     .card-body {
@@ -465,6 +441,7 @@ export class FormPage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly ticketState = inject(TicketStateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   private state: FormState = {
     file: null,
@@ -472,9 +449,8 @@ export class FormPage implements OnInit {
     ocrData: {}
   };
 
-  readonly preview = () => this.state.preview;
+  readonly preview = signal<string>('');
   readonly esOtroTipo = signal(false);
-
   readonly tiposGasto: ReadonlyArray<{ value: TipoGasto; label: string }> = [
     { value: 'COMBUSTIBLE', label: 'Combustible' },
     { value: 'COMIDA', label: 'Comida' },
@@ -537,12 +513,13 @@ export class FormPage implements OnInit {
 
   constructor() {
     const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state as any;
+    const state = navigation?.extras?.state as { file?: File; preview?: string; ocrData?: OCROriginalData };
 
     if (state?.file) {
       this.state.file = state.file;
-      this.state.preview = state.preview;
-      this.state.ocrData = state.ocrData;
+      this.state.preview = state.preview ?? '';
+      this.state.ocrData = state.ocrData ?? {};
+      this.preview.set(this.state.preview);
     }
   }
 
@@ -550,11 +527,12 @@ export class FormPage implements OnInit {
 
   ngOnInit(): void {
     if (!this.state.file) {
-      const state = history.state;
+      const state = history.state as { file?: File; preview?: string; ocrData?: OCROriginalData };
       if (state?.file) {
         this.state.file = state.file;
-        this.state.preview = state.preview;
-        this.state.ocrData = state.ocrData;
+        this.state.preview = state.preview ?? '';
+        this.state.ocrData = state.ocrData ?? {};
+        this.preview.set(this.state.preview);
       }
     }
 
@@ -563,36 +541,38 @@ export class FormPage implements OnInit {
       return;
     }
 
-    this.ticketForm.controls.tipo_gasto.valueChanges.subscribe(val => {
-      const isOtro = val === 'OTROS';
-      this.esOtroTipo.set(isOtro);
+    this.ticketForm.controls.tipo_gasto.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(val => {
+        const isOtro = val === 'OTROS';
+        this.esOtroTipo.set(isOtro);
 
-      const especificoControl = this.ticketForm.controls.tipo_gasto_especifico;
-      if (isOtro) {
-        especificoControl.setValidators(Validators.required);
-      } else {
-        especificoControl.clearValidators();
-        especificoControl.setValue('');
-      }
-      especificoControl.updateValueAndValidity();
-    });
+        const especificoControl = this.ticketForm.controls.tipo_gasto_especifico;
+        if (isOtro) {
+          especificoControl.setValidators(Validators.required);
+        } else {
+          especificoControl.clearValidators();
+          especificoControl.setValue('');
+        }
+        especificoControl.updateValueAndValidity();
+      });
 
     this.populateForm(this.state.ocrData);
   }
 
-  private populateForm(data: any): void {
-    const fechaStr = data.fecha || data.Fecha || data.FECHA;
+  private populateForm(data: OCROriginalData): void {
+    const fechaStr = (data.fecha ?? data['Fecha'] ?? data['FECHA']) as string | undefined;
     const fecha = this.parseFecha(fechaStr) ?? new Date();
 
     this.ticketForm.patchValue({
-      razon_social: data.razon_social ?? data.vendor ?? '',
-      cuit: data.cuit ?? '',
-      n_operacion: data.n_operacion ?? data.ticket_number ?? data.numero ?? '',
-      tipo_gasto: this.normalizarTipoGasto(data.tipo_gasto) as TipoGasto,
-      metodo_pago: (data.metodo_pago as MetodoPago) ?? 'Efectivo',
+      razon_social: (data.razon_social ?? data.vendor ?? '') as string,
+      cuit: (data.cuit ?? '') as string,
+      n_operacion: (data.n_operacion ?? data.ticket_number ?? data.numero ?? '') as string,
+      tipo_gasto: this.normalizarTipoGasto(data.tipo_gasto as string | undefined) as TipoGasto,
+      metodo_pago: (data.metodo_pago ?? 'Efectivo') as MetodoPago,
       fecha: fecha,
-      monto: data.monto ?? data.total ?? 0,
-      iva: data.iva ?? data.impuesto ?? 0
+      monto: (data.monto ?? data.total ?? 0) as number,
+      iva: (data.iva ?? data.impuesto ?? 0) as number
     });
   }
 

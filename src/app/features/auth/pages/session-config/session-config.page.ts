@@ -1,27 +1,24 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TicketStateService } from '../../../../core/services/ticket-state.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { LugarPredefinido } from '../../../../core/models/ticket.model';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-session-config',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    PageHeaderComponent
   ],
   template: `
     <div class="app-container">
       <div class="main-card">
         
-        <header class="card-header">
-          <img src="https://physis.com.ar/wp-content/uploads/2025/02/physis.png" alt="Physis Logo" class="logo">
-          <h1 class="app-title">Cargador de Ticket</h1>
-          <div class="network-status"></div>
-        </header>
+        <app-page-header></app-page-header>
 
         <main class="card-body">
           <div class="step-config fade-in">
@@ -56,7 +53,7 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
                 </div>
               </div>
 
-              @if (showLugarEspecifico) {
+              @if (showLugarEspecifico()) {
                 <div class="form-group field-appear">
                   <label class="input-label label-red">ESPECIFICAR LUGAR *</label>
                   <input 
@@ -133,43 +130,7 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       position: relative;
     }
 
-    /* Header */
-    .card-header {
-      background-color: #55c1e6;
-      padding: 1.5rem;
-      text-align: center;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-    }
 
-    .logo {
-      width: 100px;
-      margin-bottom: 0.75rem;
-      filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07));
-    }
-
-    .app-title {
-      color: #003366;
-      font-size: 1.5rem; /* text-2xl */
-      font-weight: 700;
-      margin: 0;
-      margin-bottom: 0.25rem;
-    }
-
-    .network-status {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      width: 0.75rem;
-      height: 0.75rem;
-      border-radius: 9999px;
-      background-color: #22c55e; /* green-500 */
-      border: 2px solid white;
-      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    }
 
     /* Body */
     .card-body {
@@ -370,14 +331,14 @@ export class SessionConfigPage {
   private readonly router = inject(Router);
 
   readonly sessionForm = this.fb.nonNullable.group({
-    encargado: ['', Validators.required],
-    lugar: ['', Validators.required],
-    lugar_especifico: ['']
+    encargado: [this.ticketState.session()?.encargado || this.authService.userName(), Validators.required],
+    lugar: [this.ticketState.session()?.lugar || '', Validators.required],
+    lugar_especifico: [this.ticketState.session()?.lugar_especifico || '']
   });
 
-  get showLugarEspecifico(): boolean {
-    return this.sessionForm.get('lugar')?.value === 'OTRO';
-  }
+  readonly showLugarEspecifico = computed(
+    () => this.sessionForm.get('lugar')?.value === 'OTRO'
+  );
 
   isFieldInvalid(fieldName: string): boolean {
     const field = this.sessionForm.get(fieldName);
@@ -390,7 +351,10 @@ export class SessionConfigPage {
       return;
     }
 
-    const { encargado, lugar, lugar_especifico } = this.sessionForm.getRawValue();
+    const formValue = this.sessionForm.getRawValue();
+    const encargado = formValue.encargado;
+    const lugar = formValue.lugar;
+    const lugar_especifico = formValue.lugar_especifico;
 
     this.ticketState.startSession(
       encargado,

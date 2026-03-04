@@ -28,6 +28,16 @@ export class TicketStateService {
     isProcessing: false
   });
 
+  private readonly onlineSignal = signal<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  readonly isOnline = computed(() => this.onlineSignal());
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => this.onlineSignal.set(true));
+      window.addEventListener('offline', () => this.onlineSignal.set(false));
+    }
+  }
+
   readonly session = computed(() => this.state().session);
   readonly currentTicket = computed(() => this.state().currentTicket);
   readonly isProcessing = computed(() => this.state().isProcessing);

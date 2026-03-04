@@ -5,10 +5,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-    selector: 'app-header',
-    standalone: true,
-    imports: [CommonModule, MatToolbarModule, MatButtonModule, MatIconModule],
-    template: `
+  selector: 'app-header',
+  standalone: true,
+  imports: [CommonModule, MatToolbarModule, MatButtonModule, MatIconModule],
+  template: `
     <mat-toolbar color="primary">
       <span>{{ title }}</span>
       <span class="spacer"></span>
@@ -19,14 +19,14 @@ import { MatIconModule } from '@angular/material/icon';
       }
     </mat-toolbar>
   `,
-    styles: [`
+  styles: [`
     .spacer {
       flex: 1 1 auto;
     }
   `]
 })
 export class HeaderComponent {
-    @Input() title: string = 'Physis Scanner';
-    @Input() showLogout: boolean = false;
-    @Output() logout = new EventEmitter<void>();
+  @Input() title: string = 'Tickets Scanner';
+  @Input() showLogout: boolean = false;
+  @Output() logout = new EventEmitter<void>();
 }

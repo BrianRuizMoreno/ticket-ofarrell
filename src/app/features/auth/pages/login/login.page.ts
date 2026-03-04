@@ -1,29 +1,26 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../../core/services/auth.service';
 import { BiometricService } from '../../../../core/services/biometric.service';
 import { AuthError } from '../../../../core/models/auth.model';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
-    MatIconModule
+    MatIconModule,
+    PageHeaderComponent
   ],
   template: `
     <div class="app-container">
       <div class="main-card">
         
-        <header class="card-header">
-          <img src="https://physis.com.ar/wp-content/uploads/2025/02/physis.png" alt="Physis Logo" class="logo">
-          <h1 class="app-title">Cargador de Ticket</h1>
-          <div class="network-status"></div>
-        </header>
+        <app-page-header></app-page-header>
 
         <main class="card-body">
           <div class="step-config fade-in">
@@ -145,43 +142,7 @@ import { AuthError } from '../../../../core/models/auth.model';
       position: relative;
     }
 
-    /* Header */
-    .card-header {
-      background-color: #55c1e6;
-      padding: 1.5rem;
-      text-align: center;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-    }
 
-    .logo {
-      width: 100px;
-      margin-bottom: 0.75rem;
-      filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07));
-    }
-
-    .app-title {
-      color: #003366;
-      font-size: 1.5rem; /* text-2xl */
-      font-weight: 700;
-      margin: 0;
-      margin-bottom: 0.25rem;
-    }
-
-    .network-status {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      width: 0.75rem;
-      height: 0.75rem;
-      border-radius: 9999px;
-      background-color: #22c55e; /* green-500 */
-      border: 2px solid white;
-      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    }
 
     /* Body */
     .card-body {
@@ -392,10 +353,11 @@ import { AuthError } from '../../../../core/models/auth.model';
 })
 export class LoginPage implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly biometricService = inject(BiometricService);
-  private readonly router = inject(Router);
 
+  readonly isOnline = signal<boolean>(navigator.onLine);
   readonly hidePassword = signal<boolean>(true);
   readonly isLoading = signal<boolean>(false);
   readonly biometricAvailable = signal<boolean>(false);
@@ -421,7 +383,7 @@ export class LoginPage implements OnInit {
     return !!(field?.invalid && (field?.dirty || field?.touched));
   }
 
-  async loginBiometric() {
+  async loginBiometric(): Promise<void> {
     const rawUsername = this.loginForm.getRawValue().username || this.lastUsername();
     const username = rawUsername ? rawUsername.trim() : '';
 
@@ -436,19 +398,15 @@ export class LoginPage implements OnInit {
 
     const success = await this.biometricService.login(username);
     if (success) {
-      const savedPass = localStorage.getItem(`bio_key_${username}`);
-      if (savedPass) {
-        this.loginForm.patchValue({ username, password: savedPass });
-        this.onSubmit();
-      } else {
-        this.error.set({
-          code: 'BIO_ERROR',
-          message: 'Biometría activada pero requiere ingreso manual una vez más.',
-          statusCode: 0
-        });
-      }
+      // Biometric verification passed — user must enter password once to authenticate.
+      // We do NOT store the password. Show a message guiding the user.
+      this.error.set({
+        code: 'BIO_OK',
+        message: 'Identidad verificada. Ingrese su contraseña para completar el acceso.',
+        statusCode: 200
+      });
+      this.loginForm.patchValue({ username });
     } else {
-      // Aggressive cleanup to force re-registration
       localStorage.removeItem(`bio_id_${username}`);
       localStorage.removeItem(`bio_enabled_${username}`);
 
@@ -477,8 +435,8 @@ export class LoginPage implements OnInit {
         this.isLoading.set(false);
         const cleanUsername = username.trim();
         localStorage.setItem('last_success_user', cleanUsername);
+        // SECURITY: Never store passwords. Only store flags and non-sensitive identifiers.
 
-        // Check for specific failure or if never enabled
         const isFirstTime = localStorage.getItem(`bio_enabled_${cleanUsername}`) !== 'true';
         const hasFailed = this.biometricFailed();
 
@@ -490,8 +448,7 @@ export class LoginPage implements OnInit {
           if (confirm(message)) {
             this.biometricService.register(cleanUsername).then(registered => {
               if (registered) {
-                localStorage.setItem(`bio_key_${cleanUsername}`, password);
-                // Reset failure flag
+                localStorage.setItem(`bio_enabled_${cleanUsername}`, 'true');
                 this.biometricFailed.set(false);
               }
             });

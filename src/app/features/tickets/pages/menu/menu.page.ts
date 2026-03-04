@@ -1,5 +1,5 @@
-import { Component, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,14 +9,16 @@ import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { AuthService } from '../../../../core/services/auth.service';
-import { TicketStateService } from '../../../../services/ticket-state.service';
+import { TicketStateService } from '../../../../core/services/ticket-state.service';
 import { LugarPredefinido } from '../../../../core/models/ticket.model';
 
 @Component({
   selector: 'app-menu',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
+    CurrencyPipe,
+    DatePipe,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -26,6 +28,21 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
   ],
   template: `
     <div class="menu-container">
+      <!-- Network Status Banner -->
+      @if (!isOnline()) {
+        <div class="offline-banner">
+          <mat-icon>wifi_off</mat-icon>
+          <span>Sin conexión — los tickets se guardan localmente</span>
+        </div>
+      }
+
+      <!-- Welcome Message -->
+      <div class="welcome-banner" style="position: relative;">
+        <h2>¡Hola <strong>{{ userName() }}</strong>!</h2>
+        <p>Bienvenido al cargador de tickets.</p>
+        <div class="network-status" [class.offline]="!isOnline()"></div>
+      </div>
+
       <!-- Header Info -->
       <div class="session-info">
         <mat-card class="info-card">
@@ -74,8 +91,13 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
                     | {{ ticket.fecha | date:'dd/MM/yyyy' }}
                   </div>
                 </div>
-                <div class="ticket-monto">
-                  {{ ticket.monto | currency:'ARS':'symbol':'1.2-2' }}
+                <div class="ticket-end">
+                  <div class="ticket-monto">
+                    {{ ticket.monto | currency:'ARS':'symbol':'1.2-2' }}
+                  </div>
+                  <button mat-icon-button class="delete-button" (click)="borrarTicket(ticket.id)">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
                 </div>
               </div>
               @if (!$last) {
@@ -151,6 +173,39 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       display: flex;
       flex-direction: column;
       gap: 16px;
+    }
+
+    .welcome-banner {
+      color: #003366;
+      margin-top: 4px;
+      margin-bottom: 8px;
+    }
+    .welcome-banner h2 {
+      font-size: 20px;
+      margin: 0;
+      font-weight: 400;
+    }
+    .welcome-banner p {
+      font-size: 14px;
+      margin: 2px 0 0 0;
+      color: #666;
+    }
+
+    .network-status {
+      position: absolute;
+      top: 0.5rem;
+      right: 0;
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 9999px;
+      background-color: #22c55e;
+      border: 2px solid white;
+      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      transition: background-color 0.3s ease;
+    }
+
+    .network-status.offline {
+      background-color: #ef4444;
     }
 
     .session-info {
@@ -272,11 +327,21 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       color: #666;
     }
 
+    .ticket-end {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .ticket-monto {
       color: #27c24c;
       font-weight: bold;
       font-size: 14px;
       white-space: nowrap;
+    }
+
+    .delete-button {
+      color: #f44336;
     }
 
     .total-row {
@@ -363,6 +428,24 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       color: #666;
     }
 
+    .offline-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #ff9800;
+      color: white;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .offline-banner mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
     ::ng-deep .mat-mdc-raised-button[disabled] {
       opacity: 0.6;
       cursor: not-allowed;
@@ -374,6 +457,8 @@ export class MenuPage {
   private readonly authService = inject(AuthService);
   private readonly ticketState = inject(TicketStateService);
 
+  readonly userName = computed(() => this.authService.userName());
+  readonly isOnline = computed(() => this.ticketState.isOnline());
   readonly encargado = computed(() => this.ticketState.session()?.encargado ?? '');
   readonly lugar = computed(() => this.ticketState.session()?.lugar ?? 'OFICINA' as LugarPredefinido);
   readonly lugarEspecifico = computed(() => this.ticketState.session()?.lugar_especifico ?? '');
@@ -402,6 +487,12 @@ export class MenuPage {
     }
 
     input.value = '';
+  }
+
+  borrarTicket(id: string): void {
+    if (confirm('¿Está seguro que desea eliminar este ticket escaneado?')) {
+      this.ticketState.removeTicket(id);
+    }
   }
 
   finalizar(): void {

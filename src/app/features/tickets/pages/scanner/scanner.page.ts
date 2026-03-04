@@ -1,10 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 
-import { TicketStateService } from '../../../../services/ticket-state.service';
+import { TicketStateService } from '../../../../core/services/ticket-state.service';
 import { OCRService } from '../../../../services/ocr.service';
 import { ImageUtils } from '../../../../core/utils/image.utils';
 import { OCROriginalData } from '../../../../core/models/ticket.model';
@@ -12,19 +12,17 @@ import { OCROriginalData } from '../../../../core/models/ticket.model';
 @Component({
   selector: 'app-scanner',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     MatProgressSpinnerModule,
-    MatIconModule
+    MatIconModule,
+    PageHeaderComponent
   ],
   template: `
     <div class="app-container">
       <div class="main-card">
         
-        <header class="card-header">
-          <img src="https://physis.com.ar/wp-content/uploads/2025/02/physis.png" alt="Physis Logo" class="logo">
-          <h1 class="app-title">Cargador de Tickets</h1>
-        </header>
+        <app-page-header></app-page-header>
 
         <main class="card-body centered-content">
           <div class="spinner-container">
@@ -98,29 +96,7 @@ import { OCROriginalData } from '../../../../core/models/ticket.model';
       position: relative;
     }
 
-    /* Header */
-    .card-header {
-      background-color: #55c1e6;
-      padding: 1.5rem;
-      text-align: center;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
 
-    .logo {
-      width: 100px;
-      margin-bottom: 0.75rem;
-      filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07));
-    }
-
-    .app-title {
-      color: #003366;
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin: 0;
-    }
 
     /* Body */
     .card-body {

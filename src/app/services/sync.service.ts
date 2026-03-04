@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, retry } from 'rxjs';
 import { environment } from '../../enviroments/enviroment';
 import { TicketSession, TicketPayload } from '../core/models/ticket.model';
 
@@ -60,6 +60,8 @@ export class SyncService {
 
         formData.append('payload_completo', JSON.stringify(payloadCompleto));
 
-        return this.http.post(this.webhookUrl, formData);
+        return this.http.post(this.webhookUrl, formData).pipe(
+            retry(3)
+        );
     }
 }

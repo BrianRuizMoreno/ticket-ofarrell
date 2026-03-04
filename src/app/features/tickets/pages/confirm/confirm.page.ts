@@ -1,5 +1,5 @@
-import { Component, inject, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,15 +9,17 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-import { TicketStateService } from '../../../../services/ticket-state.service';
+import { TicketStateService } from '../../../../core/services/ticket-state.service';
 import { SyncService } from '../../../../services/sync.service';
 import { LugarPredefinido } from '../../../../core/models/ticket.model';
 
 @Component({
   selector: 'app-confirm',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
+    CurrencyPipe,
+    DatePipe,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -28,6 +30,13 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
   ],
   template: `
     <div class="confirm-container">
+      @if (!isOnline()) {
+        <div class="offline-banner">
+          <mat-icon>wifi_off</mat-icon>
+          <span>Sin conexión — los tickets se guardan localmente</span>
+        </div>
+      }
+
       <h2 class="page-title">Resumen Final</h2>
       <p class="page-subtitle">Se enviará: Original + Modificado</p>
 
@@ -93,8 +102,10 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
             <mat-spinner diameter="20" class="inline-spinner"></mat-spinner>
             <span>Enviando...</span>
           } @else {
-            <mat-icon>send</mat-icon>
-            <span>Enviar Todo</span>
+            <ng-container>
+              <mat-icon>send</mat-icon>
+              <span>Enviar Todo</span>
+            </ng-container>
           }
         </button>
 
@@ -114,7 +125,7 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       min-height: 100vh;
       background: #f5f5f5;
       padding: 16px;
-      padding-bottom: 80px;
+      padding-bottom: 120px;
     }
 
     .page-title {
@@ -128,6 +139,25 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       color: #666;
       font-size: 14px;
       margin-bottom: 16px;
+    }
+
+    .offline-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #ff9800;
+      color: white;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .offline-banner mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
 
     .info-card {
@@ -234,7 +264,14 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       display: flex;
       flex-direction: column;
       gap: 12px;
-      margin-top: 24px;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px;
+      background: linear-gradient(to top, rgba(245,245,245,1) 80%, rgba(245,245,245,0) 100%);
+      z-index: 100;
+      box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
     }
 
     .send-button {
@@ -275,6 +312,7 @@ export class ConfirmPage {
   private readonly snackBar = inject(MatSnackBar);
 
   readonly isSending = signal<boolean>(false);
+  readonly isOnline = computed(() => this.ticketState.isOnline());
 
   readonly encargado = computed(() => this.ticketState.session()?.encargado ?? '');
   readonly lugar = computed(() => this.ticketState.session()?.lugar ?? 'OFICINA' as LugarPredefinido);
