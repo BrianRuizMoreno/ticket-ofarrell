@@ -7,7 +7,7 @@ import { TicketStateService } from '../../../core/services/ticket-state.service'
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="card-header">
-      <img src="https://logos-portal.my.canva.site/_assets/media/170043df6943e6d8d3722bbcdd5c7104.png" alt="Physis Logo" class="logo">
+      <img src="https://physis.com.ar/wp-content/uploads/2025/02/physis.png" alt="Physis Logo" class="logo">
       <h1 class="app-title">Tickets Scanner</h1>
       <div class="network-status" [class.offline]="!isOnline()"></div>
     </header>
