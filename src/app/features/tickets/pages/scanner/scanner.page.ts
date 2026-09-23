@@ -5,7 +5,7 @@ import { fromEvent } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { TicketStateService } from '../../../../core/services/ticket-state.service';
-import { OCRService } from '../../../../services/ocr.service';
+import { OCRService } from '../../../../core/services/ocr.service';
 import { ImageUtils } from '../../../../core/utils/image.utils';
 import { IOCROriginalData } from '../../../../core/models/ticket.model';
 
