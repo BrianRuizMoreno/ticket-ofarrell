@@ -1,10 +1,17 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, from, throwError } from 'rxjs';
+import { Observable, from, throwError, firstValueFrom } from 'rxjs';
 import { catchError, map, retry } from 'rxjs/operators';
 import { OfflineStorageService, IOfflineStorageItem } from './offline-storage.service';
 import { environment } from '../../../enviroments/enviroment';
-import { ITicketSession, ITicketPayload, ITicket } from '../models/ticket.model';
+import { ITicketSession, ITicketPayload } from '../models/ticket.model';
+
+export interface ISyncResponse {
+  readonly success?: boolean;
+  readonly status?: 'success' | 'saved_locally';
+  readonly id?: string;
+  readonly message?: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -26,20 +33,20 @@ export class SyncService {
 
   async syncPendingTickets(): Promise<void> {
     if (this.isSyncing) return;
-    
+
     const items = await this.offlineStorage.getAllSessions();
     if (items.length === 0) return;
 
     this.isSyncing = true;
-    console.log(`Sincronizando ${items.length} rendiciones pendientes...`);
 
     for (const item of items) {
       try {
-        // En este contexto, 'data' debería ser un ITicketPayload
-        await this.http.post(this.apiUrl, item.data).pipe(
-          retry({ count: 3, delay: 2000 })
-        ).toPromise();
-        
+        await firstValueFrom(
+          this.http.post<ISyncResponse>(this.apiUrl, item.data).pipe(
+            retry({ count: 3, delay: 2000 })
+          )
+        );
+
         await this.offlineStorage.deleteSession(item.id);
       } catch (err) {
         console.error('Error sincronizando sesión tras 3 reintentos:', item.id, err);
@@ -47,15 +54,18 @@ export class SyncService {
     }
 
     this.isSyncing = false;
-    console.log('Sincronización finalizada ✅');
   }
 
-  syncSession(session: ITicketSession): Observable<any> {
+  syncSession(session: ITicketSession): Observable<ISyncResponse> {
     const payload = this.mapSessionToPayload(session);
 
     if (navigator.onLine) {
-      return this.http.post(this.apiUrl, payload).pipe(
-        retry({ count: 3, delay: 1000 })
+      return this.http.post<ISyncResponse>(this.apiUrl, payload).pipe(
+        retry({ count: 3, delay: 1000 }),
+        map((res: ISyncResponse) => ({
+          ...res,
+          status: 'success' as const
+        }))
       );
     } else {
       const offlineItem: IOfflineStorageItem = {
@@ -63,10 +73,10 @@ export class SyncService {
         data: payload,
         timestamp: Date.now()
       };
-      
+
       return from(this.offlineStorage.saveSession(offlineItem)).pipe(
-        map(() => ({ status: 'saved_locally' })),
-        catchError(err => throwError(() => new Error('Error al guardar localmente')))
+        map(() => ({ status: 'saved_locally' as const })),
+        catchError(() => throwError(() => new Error('Error al guardar localmente en cola offline')))
       );
     }
   }
@@ -88,7 +98,7 @@ export class SyncService {
       tickets: session.tickets.map(t => ({
         id: t.id,
         archivo_nombre: t.archivo ? t.archivo.name : null,
-        imagen_base64: t.preview || null, // Se envía la imagen para el validador
+        imagen_base64: t.preview || null,
         ocr_original: t.datos_ocr_original,
         modificado: t.datos_modificados
       })),

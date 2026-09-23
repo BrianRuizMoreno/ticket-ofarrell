@@ -6,18 +6,12 @@ interface IStoredTicketSession extends Omit<ITicketSession, 'tickets'> {
   readonly tickets: ReadonlyArray<Omit<ITicket, 'archivo'> & { readonly archivo: null }>;
 }
 
-interface IQueueItem {
-  readonly payload: unknown;
-  readonly queuedAt: number;
-}
-
 @Injectable({
   providedIn: 'root'
 })
 export class StorageService {
   private readonly SESSION_KEY = 'physis_session';
   private readonly TICKET_SESSION_KEY = 'physis_ticket_session';
-  private readonly OFFLINE_QUEUE_KEY = 'physis_offline_queue';
 
   saveSession(session: ISessionData): void {
     try {
@@ -82,38 +76,4 @@ export class StorageService {
   clearTicketSession(): void {
     localStorage.removeItem(this.TICKET_SESSION_KEY);
   }
-
-  addToOfflineQueue(payload: unknown): void {
-    try {
-      const queue = this.getOfflineQueue();
-      const newQueue: ReadonlyArray<IQueueItem> = [
-        ...queue,
-        { payload, queuedAt: Date.now() }
-      ];
-      localStorage.setItem(this.OFFLINE_QUEUE_KEY, JSON.stringify(newQueue));
-    } catch (e) {
-      console.error('Error agregando a cola:', e);
-    }
-  }
-
-  getOfflineQueue(): ReadonlyArray<IQueueItem> {
-    try {
-      const data = localStorage.getItem(this.OFFLINE_QUEUE_KEY);
-      if (!data) return [];
-      return JSON.parse(data) as IQueueItem[];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  clearOfflineQueue(): void {
-    localStorage.removeItem(this.OFFLINE_QUEUE_KEY);
-  }
-
-  removeFromQueue(index: number): void {
-    const queue = this.getOfflineQueue();
-    const newQueue = [...queue];
-    newQueue.splice(index, 1);
-    localStorage.setItem(this.OFFLINE_QUEUE_KEY, JSON.stringify(newQueue));
-  }
-}
+}

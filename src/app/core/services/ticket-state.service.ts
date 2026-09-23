@@ -182,7 +182,7 @@ export class TicketStateService {
     const fueModificado = this.checkIfModified(ocrData, modifiedData);
 
     return {
-      id: `TICKET_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `TICKET_${Date.now()}_${crypto.randomUUID()}`,
       archivo,
       preview,
       datos_ocr_original: ocrData,

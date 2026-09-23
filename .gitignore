@@ -23,3 +23,6 @@ logs/
 .env.*
 .cache/
 reference-repo/
+src/enviroments/enviroment.ts
+src/enviroments/enviroment.prod.ts
+!src/enviroments/enviroment.template.ts

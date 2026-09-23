@@ -1,7 +1,7 @@
 import { Environment } from './enviroment.interface';
 
 export const environment: Environment = {
-  production: true,
+  production: false,
   apiUrl: 'https://autogestion.ivanofarrell.com.ar/phy2service/api',
   ocrEndpoint: 'http://localhost:3000/api/ai/analizar-ticket',
   saveWebhook: 'http://localhost:3000/api/rendiciones/recibir',
