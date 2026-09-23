@@ -14,21 +14,20 @@ import { TicketStateService } from '../../../../core/services/ticket-state.servi
 import { ILugarPredefinido } from '../../../../core/models/ticket.model';
 
 @Component({
-  selector: 'app-menu',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CurrencyPipe,
-    DatePipe,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatBadgeModule,
-    MatListModule,
-    MatDividerModule,
-    MatRippleModule
-  ],
-  template: `
+    selector: 'app-menu',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        CurrencyPipe,
+        DatePipe,
+        MatCardModule,
+        MatButtonModule,
+        MatIconModule,
+        MatBadgeModule,
+        MatListModule,
+        MatDividerModule,
+        MatRippleModule
+    ],
+    template: `
     <div class="menu-container">
       <!-- Network Status Banner -->
       @if (!isOnline()) {
@@ -166,7 +165,7 @@ import { ILugarPredefinido } from '../../../../core/models/ticket.model';
       </button>
     </div>
   `,
-  styles: [`
+    styles: [`
     .menu-container {
       min-height: 100vh;
       background-color: #f5f5f5;

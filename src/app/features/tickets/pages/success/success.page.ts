@@ -6,14 +6,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { TicketStateService } from '../../../../core/services/ticket-state.service';
 
 @Component({
-  selector: 'app-success',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    MatButtonModule,
-    MatIconModule
-  ],
-  template: `
+    selector: 'app-success',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        MatButtonModule,
+        MatIconModule
+    ],
+    template: `
     <div class="success-container">
       <div class="success-icon">
         <mat-icon>check</mat-icon>
@@ -34,7 +33,7 @@ import { TicketStateService } from '../../../../core/services/ticket-state.servi
       </button>
     </div>
   `,
-  styles: [`
+    styles: [`
     .success-container {
       min-height: 100vh;
       background: linear-gradient(135deg, #003366 0%, #55c1e6 100%);

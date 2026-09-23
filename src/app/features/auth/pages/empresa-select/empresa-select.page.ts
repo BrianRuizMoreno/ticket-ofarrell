@@ -11,18 +11,17 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { IEmpresa } from '../../../../core/models/auth.model';
 
 @Component({
-  selector: 'app-empresa-select',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    MatCardModule,
-    MatButtonModule,
-    MatListModule,
-    MatRadioModule,
-    MatProgressSpinnerModule,
-    MatIconModule
-  ],
-  template: `
+    selector: 'app-empresa-select',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        MatCardModule,
+        MatButtonModule,
+        MatListModule,
+        MatRadioModule,
+        MatProgressSpinnerModule,
+        MatIconModule
+    ],
+    template: `
     <div class="empresa-container">
       <mat-card class="empresa-card">
         <mat-card-header class="empresa-header">
@@ -94,7 +93,7 @@ import { IEmpresa } from '../../../../core/models/auth.model';
       </mat-card>
     </div>
   `,
-  styles: [`
+    styles: [`
     .empresa-container {
       min-height: 100vh;
       display: flex;

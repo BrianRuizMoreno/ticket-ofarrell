@@ -8,16 +8,15 @@ import { MatCardModule } from '@angular/material/card';
 import { TicketStateService } from '../../../../core/services/ticket-state.service';
 
 @Component({
-  selector: 'app-decision',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CurrencyPipe,
-    MatButtonModule,
-    MatIconModule,
-    MatCardModule
-  ],
-  template: `
+    selector: 'app-decision',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        CurrencyPipe,
+        MatButtonModule,
+        MatIconModule,
+        MatCardModule
+    ],
+    template: `
     <div class="decision-container">
       <div class="success-icon">
         <mat-icon>check</mat-icon>
@@ -54,7 +53,7 @@ import { TicketStateService } from '../../../../core/services/ticket-state.servi
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     .decision-container {
       min-height: 100vh;
       background: white;

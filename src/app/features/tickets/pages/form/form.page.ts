@@ -30,23 +30,22 @@ interface FormState {
 }
 
 @Component({
-  selector: 'app-form',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    ReactiveFormsModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatOptionModule,
-    MatButtonModule,
-    MatCardModule,
-    MatIconModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    PageHeaderComponent
-  ],
-  template: `
+    selector: 'app-form',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        ReactiveFormsModule,
+        MatInputModule,
+        MatFormFieldModule,
+        MatSelectModule,
+        MatOptionModule,
+        MatButtonModule,
+        MatCardModule,
+        MatIconModule,
+        MatDatepickerModule,
+        MatNativeDateModule,
+        PageHeaderComponent
+    ],
+    template: `
     <div class="app-container">
       <div class="main-card">
         
@@ -169,7 +168,7 @@ interface FormState {
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     :host {
       display: block;
       min-height: 100vh;

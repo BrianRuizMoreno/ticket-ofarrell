@@ -10,11 +10,10 @@ import { ImageUtils } from '../../../../core/utils/image.utils';
 import { IOCROriginalData } from '../../../../core/models/ticket.model';
 
 @Component({
-  selector: 'app-scanner',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [],
-  template: `
+    selector: 'app-scanner',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [],
+    template: `
     <div class="phy-main">
       <header class="scanner-header">
         <button 
@@ -71,7 +70,7 @@ import { IOCROriginalData } from '../../../../core/models/ticket.model';
 
     </div>
   `,
-  styles: [`
+    styles: [`
     .scanner-header {
       background: white;
       padding: 2.5rem 1.5rem 1rem;

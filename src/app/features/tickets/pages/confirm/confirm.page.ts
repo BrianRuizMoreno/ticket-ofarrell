@@ -15,22 +15,21 @@ import { SyncService } from '../../../../core/services/sync.service';
 import { ILugarPredefinido } from '../../../../core/models/ticket.model';
 
 @Component({
-  selector: 'app-confirm',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CurrencyPipe,
-    DatePipe,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatListModule,
-    MatDividerModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
-    MatRippleModule
-  ],
-  template: `
+    selector: 'app-confirm',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        CurrencyPipe,
+        DatePipe,
+        MatCardModule,
+        MatButtonModule,
+        MatIconModule,
+        MatListModule,
+        MatDividerModule,
+        MatProgressSpinnerModule,
+        MatSnackBarModule,
+        MatRippleModule
+    ],
+    template: `
     <div class="confirm-container">
       @if (!isOnline()) {
         <div class="offline-banner">
@@ -122,7 +121,7 @@ import { ILugarPredefinido } from '../../../../core/models/ticket.model';
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     .confirm-container {
       min-height: 100vh;
       background: #f5f5f5;

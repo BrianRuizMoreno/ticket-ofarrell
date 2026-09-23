@@ -8,15 +8,14 @@ import { IAuthError } from '../../../../core/models/auth.model';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    ReactiveFormsModule,
-    MatIconModule,
-    PageHeaderComponent
-  ],
-  template: `
+    selector: 'app-login',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        ReactiveFormsModule,
+        MatIconModule,
+        PageHeaderComponent
+    ],
+    template: `
     <div class="app-container">
       <div class="main-card">
         
@@ -101,7 +100,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     :host {
       display: block;
       min-height: 100vh;
