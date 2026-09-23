@@ -122,6 +122,8 @@ import { TicketStateService } from '../../../../core/services/ticket-state.servi
       font-size: 16px;
       font-weight: bold;
       border-radius: 12px;
+      border: none;
+      cursor: pointer;
     }
 
     .scan-button {

@@ -8,10 +8,11 @@ import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatRippleModule } from '@angular/material/core';
 
 import { TicketStateService } from '../../../../core/services/ticket-state.service';
-import { SyncService } from '../../../../services/sync.service';
-import { LugarPredefinido } from '../../../../core/models/ticket.model';
+import { SyncService } from '../../../../core/services/sync.service';
+import { ILugarPredefinido } from '../../../../core/models/ticket.model';
 
 @Component({
   selector: 'app-confirm',
@@ -26,7 +27,8 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
     MatListModule,
     MatDividerModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatRippleModule
   ],
   template: `
     <div class="confirm-container">
@@ -68,7 +70,7 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
         <h3 class="list-title">Detalle de Tickets</h3>
         
         @for (ticket of ticketsResumen(); track ticket.id; let i = $index) {
-          <mat-card class="ticket-card">
+          <mat-card class="ticket-card" (click)="editarTicket(ticket.id)" matRipple>
             <div class="ticket-header">
               <span class="ticket-number">{{ i + 1 }}.</span>
               <span class="ticket-razon">{{ ticket.razon }}</span>
@@ -104,7 +106,7 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
           } @else {
             <ng-container>
               <mat-icon>send</mat-icon>
-              <span>Enviar Todo</span>
+              <span> Enviar Todo</span>
             </ng-container>
           }
         </button>
@@ -125,7 +127,7 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       min-height: 100vh;
       background: #f5f5f5;
       padding: 16px;
-      padding-bottom: 120px;
+      padding-bottom: 140px;
     }
 
     .page-title {
@@ -165,6 +167,7 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       margin-bottom: 16px;
       background: linear-gradient(135deg, #e3f2fd 0%, #f0f9ff 100%);
       border-left: 4px solid #003366;
+      border-radius: 12px;
     }
 
     .info-row {
@@ -219,7 +222,17 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
 
     .ticket-card {
       padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
       margin-bottom: 8px;
+      border-radius: 12px;
+    }
+
+    .ticket-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      border-color: #27c24c;
     }
 
     .ticket-header {
@@ -238,6 +251,9 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       color: #003366;
       font-weight: 600;
       flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .edited-tag {
@@ -269,6 +285,7 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       left: 0;
       right: 0;
       padding: 16px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom) + 8px);
       background: linear-gradient(to top, rgba(245,245,245,1) 80%, rgba(245,245,245,0) 100%);
       z-index: 100;
       box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
@@ -280,10 +297,27 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       font-weight: bold;
       text-transform: uppercase;
       background-color: #27c24c !important;
+      color: white !important;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .send-button ::ng-deep .mdc-button__label {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 12px;
+      height: 100%;
+      line-height: 1;
+    }
+
+    .send-button mat-icon {
+      margin: 0 !important;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      transform: translateY(-1px);
     }
 
     .send-button:hover:not(:disabled) {
@@ -293,15 +327,14 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
     .back-button {
       height: 48px;
       color: #666;
+      background: none;
+      border: none;
+      cursor: pointer;
     }
 
     .inline-spinner {
       display: inline-block;
       margin-right: 8px;
-    }
-
-    ::ng-deep .mat-mdc-raised-button[disabled] {
-      opacity: 0.6;
     }
   `]
 })
@@ -315,14 +348,14 @@ export class ConfirmPage {
   readonly isOnline = computed(() => this.ticketState.isOnline());
 
   readonly encargado = computed(() => this.ticketState.session()?.encargado ?? '');
-  readonly lugar = computed(() => this.ticketState.session()?.lugar ?? 'OFICINA' as LugarPredefinido);
+  readonly lugar = computed(() => this.ticketState.session()?.lugar ?? 'OFICINA' as ILugarPredefinido);
   readonly lugarEspecifico = computed(() => this.ticketState.session()?.lugar_especifico ?? '');
   readonly ticketsCount = computed(() => this.ticketState.ticketsCount());
   readonly totalMonto = computed(() => this.ticketState.totalMonto());
   readonly ticketsResumen = computed(() => this.ticketState.ticketsResumen());
 
   readonly lugarDisplay = computed((): string => {
-    const lugares: Record<LugarPredefinido, string> = {
+    const lugares: Record<ILugarPredefinido, string> = {
       'REMATE_FISICO': 'Remate Físico',
       'REMATE_CABANA': 'Remate Cabaña',
       'OFICINA': 'Oficina',
@@ -331,6 +364,10 @@ export class ConfirmPage {
     };
     return lugares[this.lugar()] ?? this.lugar();
   });
+
+  editarTicket(id: string): void {
+    this.router.navigate(['/tickets/form'], { state: { editId: id } });
+  }
 
   volver(): void {
     this.router.navigate(['/tickets/menu']);

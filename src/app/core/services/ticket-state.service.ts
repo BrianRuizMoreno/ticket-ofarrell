@@ -1,18 +1,20 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, inject, DestroyRef } from '@angular/core';
+import { fromEvent } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
-  Ticket,
-  TicketSession,
-  TicketResumen,
-  LugarPredefinido,
-  TicketModifiedData,
-  OCROriginalData
+  ITicket,
+  ITicketSession,
+  ITicketResumen,
+  ILugarPredefinido,
+  ITicketModifiedData,
+  IOCROriginalData
 } from '../models/ticket.model';
 import { StorageService } from './storage.service';
 
-interface TicketState {
-  readonly session: TicketSession | null;
-  readonly currentTicket: Ticket | null;
+interface ITicketState {
+  readonly session: ITicketSession | null;
+  readonly currentTicket: ITicket | null;
   readonly isProcessing: boolean;
 }
 
@@ -21,8 +23,9 @@ interface TicketState {
 })
 export class TicketStateService {
   private readonly storage = inject(StorageService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private readonly state = signal<TicketState>({
+  private readonly state = signal<ITicketState>({
     session: this.loadInitialSession(),
     currentTicket: null,
     isProcessing: false
@@ -33,8 +36,13 @@ export class TicketStateService {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      window.addEventListener('online', () => this.onlineSignal.set(true));
-      window.addEventListener('offline', () => this.onlineSignal.set(false));
+      fromEvent(window, 'online')
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.onlineSignal.set(true));
+
+      fromEvent(window, 'offline')
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.onlineSignal.set(false));
     }
   }
 
@@ -46,12 +54,12 @@ export class TicketStateService {
   readonly ticketsCount = computed(() => this.state().session?.tickets.length ?? 0);
   readonly totalMonto = computed(() => {
     const tickets = this.state().session?.tickets ?? [];
-    return tickets.reduce((sum: number, t: Ticket) => sum + t.datos_modificados.monto, 0);
+    return tickets.reduce((sum: number, t: ITicket) => sum + t.datos_modificados.monto, 0);
   });
 
-  readonly ticketsResumen = computed((): ReadonlyArray<TicketResumen> => {
+  readonly ticketsResumen = computed((): ReadonlyArray<ITicketResumen> => {
     const tickets = this.state().session?.tickets ?? [];
-    return tickets.map((t: Ticket): TicketResumen => ({
+    return tickets.map((t: ITicket): ITicketResumen => ({
       id: t.id,
       razon: t.datos_modificados.razon_social,
       tipo: t.datos_modificados.tipo_gasto,
@@ -62,12 +70,12 @@ export class TicketStateService {
     }));
   });
 
-  private loadInitialSession(): TicketSession | null {
+  private loadInitialSession(): ITicketSession | null {
     return this.storage.getTicketSession();
   }
 
-  startSession(encargado: string, lugar: LugarPredefinido, lugarEspecifico: string): void {
-    const newSession: TicketSession = {
+  startSession(encargado: string, lugar: ILugarPredefinido, lugarEspecifico: string): void {
+    const newSession: ITicketSession = {
       encargado,
       lugar,
       lugar_especifico: lugarEspecifico,
@@ -79,24 +87,24 @@ export class TicketStateService {
     this.saveSession(newSession);
   }
 
-  private saveSession(session: TicketSession): void {
+  private saveSession(session: ITicketSession): void {
     this.storage.saveTicketSession(session);
   }
 
   setProcessing(value: boolean): void {
-    this.state.update((s: TicketState) => ({ ...s, isProcessing: value }));
+    this.state.update((s: ITicketState) => ({ ...s, isProcessing: value }));
   }
 
-  setCurrentTicket(ticket: Ticket | null): void {
-    this.state.update((s: TicketState) => ({ ...s, currentTicket: ticket }));
+  setCurrentTicket(ticket: ITicket | null): void {
+    this.state.update((s: ITicketState) => ({ ...s, currentTicket: ticket }));
   }
 
-  addTicket(ticket: Ticket): void {
-    this.state.update((s: TicketState) => {
+  addTicket(ticket: ITicket): void {
+    this.state.update((s: ITicketState) => {
       if (!s.session) return s;
 
-      const updatedTickets: ReadonlyArray<Ticket> = [...s.session.tickets, ticket];
-      const updatedSession: TicketSession = {
+      const updatedTickets: ReadonlyArray<ITicket> = [...s.session.tickets, ticket];
+      const updatedSession: ITicketSession = {
         ...s.session,
         tickets: updatedTickets
       };
@@ -107,12 +115,38 @@ export class TicketStateService {
     this.persistSession();
   }
 
-  removeTicket(id: string): void {
-    this.state.update((s: TicketState) => {
+  getTicketById(id: string): ITicket | undefined {
+    return this.state().session?.tickets.find(t => t.id === id);
+  }
+
+  updateTicket(id: string, modifiedData: ITicketModifiedData): void {
+    this.state.update((s: ITicketState) => {
       if (!s.session) return s;
 
-      const updatedTickets = s.session.tickets.filter((t: Ticket) => t.id !== id);
-      const updatedSession: TicketSession = {
+      const updatedTickets = s.session.tickets.map((t: ITicket) => {
+        if (t.id === id) {
+          const fueModificado = this.checkIfModified(t.datos_ocr_original, modifiedData);
+          return {
+            ...t,
+            datos_modificados: modifiedData,
+            fue_modificado: fueModificado
+          };
+        }
+        return t;
+      });
+
+      return { ...s, session: { ...s.session, tickets: updatedTickets } };
+    });
+
+    this.persistSession();
+  }
+
+  removeTicket(id: string): void {
+    this.state.update((s: ITicketState) => {
+      if (!s.session) return s;
+
+      const updatedTickets = s.session.tickets.filter((t: ITicket) => t.id !== id);
+      const updatedSession: ITicketSession = {
         ...s.session,
         tickets: updatedTickets
       };
@@ -142,9 +176,9 @@ export class TicketStateService {
   createTicket(
     archivo: File | null,
     preview: string,
-    ocrData: OCROriginalData,
-    modifiedData: TicketModifiedData
-  ): Ticket {
+    ocrData: IOCROriginalData,
+    modifiedData: ITicketModifiedData
+  ): ITicket {
     const fueModificado = this.checkIfModified(ocrData, modifiedData);
 
     return {
@@ -159,7 +193,7 @@ export class TicketStateService {
     };
   }
 
-  private checkIfModified(ocr: OCROriginalData, modified: TicketModifiedData): boolean {
+  private checkIfModified(ocr: IOCROriginalData, modified: ITicketModifiedData): boolean {
     const ocrRazon = ocr.razon_social ?? ocr.vendor ?? '';
     const ocrMonto = ocr.monto ?? ocr.total ?? 0;
 
@@ -168,4 +202,4 @@ export class TicketStateService {
       Math.abs(ocrMonto - modified.monto) > 0.01
     );
   }
-}
+}

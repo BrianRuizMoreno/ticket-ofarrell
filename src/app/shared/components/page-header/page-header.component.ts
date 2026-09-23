@@ -1,5 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
-import { TicketStateService } from '../../../core/services/ticket-state.service';
+import { Component, ChangeDetectionStrategy, signal, Input, HostListener, Output, EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-page-header',
@@ -7,8 +6,13 @@ import { TicketStateService } from '../../../core/services/ticket-state.service'
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="card-header">
+      @if (showLogout) {
+        <button class="back-btn" (click)="back.emit()">
+          <span class="material-icons">logout</span>
+        </button>
+      }
       <img src="https://physis.com.ar/wp-content/uploads/2025/02/physis.png" alt="Physis Logo" class="logo">
-      <h1 class="app-title">Tickets Scanner</h1>
+      <h1 class="app-title">{{ title }}</h1>
       <div class="network-status" [class.offline]="!isOnline()"></div>
     </header>
   `,
@@ -22,6 +26,29 @@ import { TicketStateService } from '../../../core/services/ticket-state.service'
       flex-direction: column;
       align-items: center;
       position: relative;
+    }
+
+    .back-btn {
+      position: absolute;
+      left: 1.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: #003366;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .back-btn:active {
+      background: rgba(255, 255, 255, 0.4);
+      transform: translateY(-50%) scale(0.95);
     }
 
     .logo {
@@ -57,6 +84,19 @@ import { TicketStateService } from '../../../core/services/ticket-state.service'
   `]
 })
 export class PageHeaderComponent {
-  private readonly ticketState = inject(TicketStateService);
-  readonly isOnline = this.ticketState ? this.ticketState.isOnline : signal(true);
+  @Input() title: string = 'Tickets Scanner';
+  @Input() showLogout: boolean = true;
+  @Output() back = new EventEmitter<void>();
+  
+  readonly isOnline = signal(navigator.onLine);
+
+  @HostListener('window:online')
+  onOnline() {
+    this.isOnline.set(true);
+  }
+
+  @HostListener('window:offline')
+  onOffline() {
+    this.isOnline.set(false);
+  }
 }

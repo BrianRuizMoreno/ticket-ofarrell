@@ -17,7 +17,7 @@ export type MetodoPago =
   | 'Tarjeta de Débito'
   | 'Transferencia';
 
-export type LugarPredefinido =
+export type ILugarPredefinido =
   | 'REMATE_FISICO'
   | 'REMATE_CABANA'
   | 'OFICINA'
@@ -25,7 +25,7 @@ export type LugarPredefinido =
   | 'OTRO';
 
 
-export interface OCROriginalData extends JsonObject {
+export interface IOCROriginalData extends JsonObject {
   readonly razon_social?: string;
   readonly cuit?: string;
   readonly n_operacion?: string;
@@ -40,9 +40,10 @@ export interface OCROriginalData extends JsonObject {
   readonly ticket_number?: string;
   readonly numero?: string;
   readonly impuesto?: number;
+  readonly items?: string[];
 }
 
-export interface TicketModifiedData {
+export interface ITicketModifiedData {
   razon_social: string;
   cuit: string;
   n_operacion: string;
@@ -57,26 +58,30 @@ export interface TicketModifiedData {
 
 export type SyncStatus = 'pending' | 'synced' | 'error' | 'syncing';
 
-export interface Ticket {
+export interface ITicket {
   readonly id: string;
   readonly archivo: File | null;
   readonly preview: string;
-  readonly datos_modificados: TicketModifiedData;
-  readonly datos_ocr_original: OCROriginalData;
+  readonly datos_modificados: ITicketModifiedData;
+  readonly datos_ocr_original: IOCROriginalData;
   readonly fue_modificado: boolean;
   readonly timestamp: number;
   readonly sync_status: SyncStatus;
 }
 
-export interface TicketSession {
+export interface ITicketSession {
   readonly encargado: string;
-  readonly lugar: LugarPredefinido;
+  readonly lugar: ILugarPredefinido;
   readonly lugar_especifico: string;
-  readonly tickets: ReadonlyArray<Ticket>;
+  readonly tickets: ReadonlyArray<ITicket>;
   readonly fecha_inicio: string;
 }
 
-export interface TicketPayload {
+export interface ITicketPayload {
+  readonly id?: string;
+  readonly usuario?: string;
+  readonly empresa?: string;
+  readonly total?: number;
   readonly session: {
     readonly encargado: string;
     readonly lugar: string;
@@ -85,8 +90,9 @@ export interface TicketPayload {
   readonly tickets: ReadonlyArray<{
     readonly id: string;
     readonly archivo_nombre: string | null;
-    readonly ocr_original: OCROriginalData;
-    readonly modificado: TicketModifiedData;
+    readonly imagen_base64?: string | null;
+    readonly ocr_original: IOCROriginalData;
+    readonly modificado: ITicketModifiedData;
   }>;
   readonly totales: {
     readonly monto: number;
@@ -94,7 +100,7 @@ export interface TicketPayload {
   };
 }
 
-export interface TicketResumen {
+export interface ITicketResumen {
   readonly id: string;
   readonly razon: string;
   readonly tipo: TipoGasto;
@@ -102,4 +108,4 @@ export interface TicketResumen {
   readonly monto: number;
   readonly fecha: string;
   readonly fueModificado: boolean;
-}
+}

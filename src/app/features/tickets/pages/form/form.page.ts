@@ -3,18 +3,22 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { MatOptionModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+
 
 import { TicketStateService } from '../../../../core/services/ticket-state.service';
 import {
-  OCROriginalData,
-  TicketModifiedData,
+  IOCROriginalData,
+  ITicketModifiedData,
   TipoGasto,
   MetodoPago,
 } from '../../../../core/models/ticket.model';
@@ -22,7 +26,7 @@ import {
 interface FormState {
   file: File | null;
   preview: string;
-  ocrData: OCROriginalData;
+  ocrData: IOCROriginalData;
 }
 
 @Component({
@@ -32,7 +36,9 @@ interface FormState {
   imports: [
     ReactiveFormsModule,
     MatInputModule,
+    MatFormFieldModule,
     MatSelectModule,
+    MatOptionModule,
     MatButtonModule,
     MatCardModule,
     MatIconModule,
@@ -49,7 +55,10 @@ interface FormState {
         <main class="card-body">
           <div class="form-header-row">
             <h2 class="section-title">Revisar Datos</h2>
-            <button class="cancel-button" (click)="cancelar()">Cancelar</button>
+            <div class="header-actions">
+
+              <button class="cancel-button" (click)="cancelar()">Cancelar</button>
+            </div>
           </div>
 
           <div class="preview-section">
@@ -61,125 +70,92 @@ interface FormState {
             
             <!-- Razón Social -->
             <div class="form-group">
-              <label class="input-label">RAZÓN SOCIAL *</label>
-              <input 
-                type="text" 
-                formControlName="razon_social" 
-                class="form-input" 
-                placeholder="Nombre del comercio"
-                [class.error]="isFieldInvalid('razon_social')"
-              >
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>PROVEEDOR / RAZÓN SOCIAL *</mat-label>
+                <input matInput formControlName="razon_social" placeholder="Nombre del comercio">
+              </mat-form-field>
             </div>
 
             <!-- CUIT y N Op -->
             <div class="form-row">
-              <div class="form-group half">
-                <label class="input-label">CUIT</label>
-                <input 
-                  type="text" 
-                  formControlName="cuit" 
-                  class="form-input" 
-                  placeholder="30-..."
-                >
-              </div>
-              <div class="form-group half">
-                <label class="input-label">N° OP</label>
-                <input 
-                  type="text" 
-                  formControlName="n_operacion" 
-                  class="form-input"
-                >
-              </div>
+              <mat-form-field appearance="outline" class="half">
+                <mat-label>CUIT</mat-label>
+                <input matInput formControlName="cuit" placeholder="30-...">
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline" class="half">
+                <mat-label>N° OP</mat-label>
+                <input matInput formControlName="n_operacion">
+              </mat-form-field>
             </div>
 
             <!-- Tipo de Gasto -->
             <div class="form-group">
-              <label class="input-label">TIPO DE GASTO *</label>
-              <div class="select-wrapper">
-                <select formControlName="tipo_gasto" class="form-input form-select" [class.error]="isFieldInvalid('tipo_gasto')">
-                  <option value="" disabled selected>Seleccione...</option>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>TIPO DE GASTO *</mat-label>
+                <mat-select formControlName="tipo_gasto">
                   @for (tipo of tiposGasto; track tipo.value) {
-                    <option [value]="tipo.value">{{ tipo.label }}</option>
+                    <mat-option [value]="tipo.value">{{ tipo.label }}</mat-option>
                   }
-                </select>
-              </div>
+                </mat-select>
+              </mat-form-field>
             </div>
 
             <!-- Especificar Tipo -->
             @if (esOtroTipo()) {
               <div class="form-group field-appear">
-                <label class="input-label label-red">ESPECIFICAR TIPO *</label>
-                <input 
-                  type="text" 
-                  formControlName="tipo_gasto_especifico" 
-                  class="form-input input-red" 
-                  placeholder="¿Qué tipo de gasto?"
-                  [class.error]="isFieldInvalid('tipo_gasto_especifico')"
-                >
+                <mat-form-field appearance="outline" class="full-width color-red">
+                  <mat-label>ESPECIFICAR TIPO *</mat-label>
+                  <input matInput formControlName="tipo_gasto_especifico" placeholder="¿Qué tipo de gasto?">
+                </mat-form-field>
               </div>
             }
 
             <!-- Metodo y Fecha -->
             <div class="form-row">
-              <div class="form-group half">
-                <label class="input-label">MÉTODO DE PAGO</label>
-                <div class="select-wrapper">
-                  <select formControlName="metodo_pago" class="form-input form-select">
-                    @for (metodo of metodosPago; track metodo) {
-                      <option [value]="metodo">{{ metodo }}</option>
-                    }
-                  </select>
-                </div>
-              </div>
-              <div class="form-group half">
-                <label class="input-label">FECHA *</label>
-                <input 
-                  type="date" 
-                  [value]="formattedDate"
-                  (input)="onDateChange($event)"
-                  class="form-input"
-                  [class.error]="isFieldInvalid('fecha')"
-                >
-              </div>
+              <mat-form-field appearance="outline" class="half">
+                <mat-label>MÉTODO DE PAGO</mat-label>
+                <mat-select formControlName="metodo_pago">
+                  @for (metodo of metodosPago; track metodo) {
+                    <mat-option [value]="metodo">{{ metodo }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half">
+                <mat-label>FECHA *</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="fecha">
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field>
             </div>
 
             <!-- IVA y Total -->
             <div class="form-row">
-              <div class="form-group half">
-                <label class="input-label">IVA $</label>
-                <input 
-                  type="number" 
-                  formControlName="iva" 
-                  class="form-input text-right" 
-                  placeholder="0.00"
-                >
-              </div>
-              <div class="form-group half">
-                <label class="input-label">TOTAL $ *</label>
-                <input 
-                  type="number" 
-                  formControlName="monto" 
-                  class="form-input total-input text-right" 
-                  placeholder="0.00"
-                  [class.error]="isFieldInvalid('monto')"
-                >
-              </div>
+              <mat-form-field appearance="outline" class="half">
+                <mat-label>IVA $</mat-label>
+                <input matInput type="number" formControlName="iva" placeholder="0.00" class="text-right">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half">
+                <mat-label>TOTAL $ *</mat-label>
+                <input matInput type="number" formControlName="monto" placeholder="0.00" class="text-right total-input">
+              </mat-form-field>
             </div>
 
             <!-- Observaciones -->
             <div class="form-group">
-              <label class="input-label">OBSERVACIONES</label>
-              <textarea 
-                formControlName="observaciones" 
-                class="form-input textarea-input" 
-                placeholder="Detalles adicionales..."
-                rows="3"
-              ></textarea>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>OBSERVACIONES</mat-label>
+                <textarea matInput formControlName="observaciones" placeholder="Detalles adicionales..." rows="3"></textarea>
+              </mat-form-field>
             </div>
 
             <div class="form-actions">
               <button 
                 type="submit" 
+                mat-raised-button
+                color="primary"
                 class="submit-button"
                 [disabled]="ticketForm.invalid"
               >
@@ -200,7 +176,6 @@ interface FormState {
       background-color: #f3f4f6;
     }
 
-    /* Responsive Background */
     @media (min-width: 768px) {
       .app-container {
         padding: 1rem;
@@ -234,9 +209,6 @@ interface FormState {
       position: relative;
     }
 
-
-
-    /* Body */
     .card-body {
       flex-grow: 1;
       display: flex;
@@ -244,7 +216,7 @@ interface FormState {
       background-color: white;
       padding: 1.5rem;
       gap: 1.5rem;
-      padding-bottom: 4rem; /* Valid space for scrolling */
+      padding-bottom: 4rem;
       overflow-y: auto;
     }
 
@@ -265,7 +237,7 @@ interface FormState {
     .cancel-button {
       background: none;
       border: none;
-      color: #ef4444; /* red-500 */
+      color: #ef4444;
       font-weight: 600;
       font-size: 0.875rem;
       cursor: pointer;
@@ -273,7 +245,7 @@ interface FormState {
 
     .preview-section {
       width: 100%;
-      height: 120px; /* Compact height */
+      height: 120px;
       background-color: #f3f4f6;
       border-radius: 0.5rem;
       position: relative;
@@ -302,7 +274,6 @@ interface FormState {
       font-weight: 700;
     }
 
-    /* Form */
     .ticket-form {
       display: flex;
       flex-direction: column;
@@ -339,11 +310,11 @@ interface FormState {
     .form-input {
       width: 100%;
       padding: 0.75rem;
-      background-color: #f9fafb; /* bg-gray-50 */
-      border: 1px solid #d1d5db; /* border-gray-300 */
+      background-color: #f9fafb;
+      border: 1px solid #d1d5db;
       border-radius: 0.5rem;
       outline: none;
-      font-size: 0.9375rem; /* text-[15px] */
+      font-size: 0.9375rem;
       color: #1f2937;
       box-sizing: border-box;
       transition: all 0.2s;
@@ -383,7 +354,6 @@ interface FormState {
       box-shadow: 0 0 0 2px #f87171;
     }
 
-    /* Select specific */
     .select-wrapper {
       position: relative;
     }
@@ -396,14 +366,13 @@ interface FormState {
       background-size: 20px;
     }
 
-    /* Actions */
     .form-actions {
       padding-top: 1rem;
     }
 
     .submit-button {
       width: 100%;
-      background-color: #22c55e; /* Green-500 */
+      background-color: #22c55e;
       color: white;
       font-weight: 700;
       font-size: 1rem;
@@ -417,7 +386,7 @@ interface FormState {
     }
 
     .submit-button:hover {
-      background-color: #16a34a; /* Green-600 */
+      background-color: #16a34a;
     }
     
     .submit-button:disabled {
@@ -426,7 +395,6 @@ interface FormState {
       background-color: #d1d5db;
     }
 
-    /* Animation */
     .field-appear {
       animation: slideDown 0.3s ease-out;
     }
@@ -435,6 +403,23 @@ interface FormState {
       from { opacity: 0; max-height: 0; } 
       to { opacity: 1; max-height: 200px; } 
     }
+
+    ::ng-deep .mat-mdc-form-field {
+      width: 100%;
+    }
+
+    ::ng-deep .mat-mdc-text-field-wrapper {
+      background-color: #f9fafb !important;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .total-input {
+      font-weight: 700 !important;
+      color: #003366 !important;
+    }
   `]
 })
 export class FormPage implements OnInit {
@@ -442,6 +427,8 @@ export class FormPage implements OnInit {
   private readonly router = inject(Router);
   private readonly ticketState = inject(TicketStateService);
   private readonly destroyRef = inject(DestroyRef);
+
+  private editId: string | null = null;
 
   private state: FormState = {
     file: null,
@@ -483,24 +470,11 @@ export class FormPage implements OnInit {
     observaciones: ['']
   });
 
-  get formattedDate(): string {
-    const date = this.ticketForm.controls.fecha.value;
-    return date ? this.formatFecha(date) : '';
-  }
-
   isFieldInvalid(fieldName: string): boolean {
     const field = this.ticketForm.get(fieldName);
     return !!(field?.invalid && (field?.dirty || field?.touched));
   }
 
-  onDateChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.value) {
-      const [year, month, day] = input.value.split('-').map(Number);
-      const date = new Date(year, month - 1, day, 12, 0, 0);
-      this.ticketForm.controls.fecha.setValue(date);
-    }
-  }
 
   openFullImage(): void {
     if (this.state.preview) {
@@ -513,9 +487,11 @@ export class FormPage implements OnInit {
 
   constructor() {
     const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state as { file?: File; preview?: string; ocrData?: OCROriginalData };
+    const state = navigation?.extras?.state as any;
 
-    if (state?.file) {
+    if (state?.editId) {
+      this.editId = state.editId;
+    } else if (state?.file) {
       this.state.file = state.file;
       this.state.preview = state.preview ?? '';
       this.state.ocrData = state.ocrData ?? {};
@@ -523,22 +499,44 @@ export class FormPage implements OnInit {
     }
   }
 
-
-
   ngOnInit(): void {
-    if (!this.state.file) {
-      const state = history.state as { file?: File; preview?: string; ocrData?: OCROriginalData };
-      if (state?.file) {
+    if (this.editId) {
+      const ticket = this.ticketState.getTicketById(this.editId!);
+      if (ticket) {
+        this.state.file = ticket.archivo;
+        this.state.preview = ticket.preview;
+        this.state.ocrData = ticket.datos_ocr_original;
+        this.preview.set(this.state.preview);
+        
+        this.populateFormFromModified(ticket.datos_modificados);
+      } else {
+        this.router.navigate(['/tickets/confirm']);
+        return;
+      }
+    } else if (!this.state.file) {
+      const state = history.state as any;
+      if (state?.editId) {
+        this.editId = state.editId;
+        const ticket = this.ticketState.getTicketById(this.editId!);
+        if (ticket) {
+          this.state.file = ticket.archivo;
+          this.state.preview = ticket.preview;
+          this.state.ocrData = ticket.datos_ocr_original;
+          this.preview.set(this.state.preview);
+          this.populateFormFromModified(ticket.datos_modificados);
+        }
+      } else if (state?.file) {
         this.state.file = state.file;
         this.state.preview = state.preview ?? '';
         this.state.ocrData = state.ocrData ?? {};
         this.preview.set(this.state.preview);
+        this.populateForm(this.state.ocrData);
+      } else {
+        this.router.navigate(['/tickets/menu']);
+        return;
       }
-    }
-
-    if (!this.state.file) {
-      this.router.navigate(['/tickets/menu']);
-      return;
+    } else {
+      this.populateForm(this.state.ocrData);
     }
 
     this.ticketForm.controls.tipo_gasto.valueChanges
@@ -556,24 +554,52 @@ export class FormPage implements OnInit {
         }
         especificoControl.updateValueAndValidity();
       });
-
-    this.populateForm(this.state.ocrData);
   }
 
-  private populateForm(data: OCROriginalData): void {
+  private populateFormFromModified(data: ITicketModifiedData): void {
+    const fecha = typeof data.fecha === 'string' ? this.parseFecha(data.fecha) : new Date(data.fecha);
+    
+    this.ticketForm.patchValue({
+      razon_social: data.razon_social,
+      cuit: data.cuit,
+      n_operacion: data.n_operacion,
+      tipo_gasto: data.tipo_gasto,
+      tipo_gasto_especifico: data.tipo_gasto_especifico,
+      metodo_pago: data.metodo_pago,
+      fecha: fecha || new Date(),
+      monto: data.monto,
+      iva: data.iva,
+      observaciones: data.observaciones
+    });
+    
+    if (data.tipo_gasto === 'OTROS') {
+      this.esOtroTipo.set(true);
+    }
+  }
+
+  private populateForm(data: IOCROriginalData): void {
     const fechaStr = (data.fecha ?? data['Fecha'] ?? data['FECHA']) as string | undefined;
     const fecha = this.parseFecha(fechaStr) ?? new Date();
+    const tipoGasto = this.normalizarTipoGasto(data.tipo_gasto as string | undefined) as TipoGasto;
 
     this.ticketForm.patchValue({
       razon_social: (data.razon_social ?? data.vendor ?? '') as string,
       cuit: (data.cuit ?? '') as string,
       n_operacion: (data.n_operacion ?? data.ticket_number ?? data.numero ?? '') as string,
-      tipo_gasto: this.normalizarTipoGasto(data.tipo_gasto as string | undefined) as TipoGasto,
+      tipo_gasto: tipoGasto,
       metodo_pago: (data.metodo_pago ?? 'Efectivo') as MetodoPago,
       fecha: fecha,
       monto: (data.monto ?? data.total ?? 0) as number,
       iva: (data.iva ?? data.impuesto ?? 0) as number
     });
+
+    // Disparar el estado del campo "especificar" manualmente,
+    // ya que el patchValue ocurre antes de que valueChanges esté suscrito.
+    if (tipoGasto === 'OTROS') {
+      this.esOtroTipo.set(true);
+      this.ticketForm.controls.tipo_gasto_especifico.setValidators(Validators.required);
+      this.ticketForm.controls.tipo_gasto_especifico.updateValueAndValidity();
+    }
   }
 
   private parseFecha(fechaStr: string | undefined): Date | null {
@@ -606,14 +632,12 @@ export class FormPage implements OnInit {
     return '';
   }
 
-
-
   guardar(): void {
     if (this.ticketForm.invalid) return;
 
     const formValue = this.ticketForm.getRawValue();
 
-    const modifiedData: TicketModifiedData = {
+    const modifiedData: ITicketModifiedData = {
       razon_social: formValue.razon_social,
       cuit: formValue.cuit,
       n_operacion: formValue.n_operacion,
@@ -626,25 +650,35 @@ export class FormPage implements OnInit {
       observaciones: formValue.observaciones
     };
 
-    const ticket = this.ticketState.createTicket(
-      this.state.file,
-      this.state.preview,
-      this.state.ocrData,
-      modifiedData
-    );
+    if (this.editId) {
+      this.ticketState.updateTicket(this.editId!, modifiedData);
+      this.router.navigate(['/tickets/confirm']);
+    } else {
+      const ticket = this.ticketState.createTicket(
+        this.state.file,
+        this.state.preview,
+        this.state.ocrData,
+        modifiedData
+      );
 
-    this.ticketState.addTicket(ticket);
-    this.router.navigate(['/tickets/decision']);
+      this.ticketState.addTicket(ticket);
+      this.router.navigate(['/tickets/decision']);
+    }
   }
 
-  private formatFecha(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  private formatFecha(fecha: Date): string {
+    const tzoffset = fecha.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(fecha.getTime() - tzoffset).toISOString().slice(0, 10);
+    return localISOTime;
   }
 
   cancelar(): void {
-    this.router.navigate(['/tickets/menu']);
+    if (this.editId) {
+      this.router.navigate(['/tickets/confirm']);
+    } else {
+      this.router.navigate(['/tickets/menu']);
+    }
   }
+
+
 }

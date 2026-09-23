@@ -8,7 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 
 import { AuthService } from '../../../../core/services/auth.service';
-import { Empresa } from '../../../../core/models/auth.model';
+import { IEmpresa } from '../../../../core/models/auth.model';
 
 @Component({
   selector: 'app-empresa-select',
@@ -252,7 +252,7 @@ export class EmpresaSelectPage {
   readonly selectedId = signal<string>('');
   readonly error = signal<string>('');
 
-  readonly empresas = computed(() => this.authService.empresasDisponibles() ?? []);
+  readonly empresas = computed((): ReadonlyArray<IEmpresa> => this.authService.empresasDisponibles() ?? []);
   readonly nombreUsuario = computed(() => this.authService.getNombreUsuario());
 
   constructor() {

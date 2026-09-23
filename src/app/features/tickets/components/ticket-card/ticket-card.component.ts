@@ -1,38 +1,43 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { TicketResumen } from '../../../../core/models/ticket.model';
+import { ITicketResumen } from '../../../../core/models/ticket.model';
 
 @Component({
     selector: 'app-ticket-card',
     standalone: true,
-    imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule],
+    imports: [CommonModule],
     template: `
-    <mat-card class="ticket-card" [class.modified]="ticket.fueModificado">
-      <mat-card-header>
-        <div mat-card-avatar class="ticket-avatar">
-          <mat-icon>receipt</mat-icon>
+    <div class="phy-card ticket-card" [class.ticket-card--modified]="ticket.fueModificado">
+      <div class="ticket-card__header">
+        <div class="ticket-card__icon">
+          <span class="phy-icon">receipt</span>
         </div>
-        <mat-card-title>{{ ticket.razon }}</mat-card-title>
-        <mat-card-subtitle>{{ ticket.fecha | date:'dd/MM/yyyy' }}</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="ticket-details">
-          <div class="ticket-type">
-            {{ ticket.tipo }}
-            <span *ngIf="ticket.tipo === 'OTROS'"> - {{ ticket.tipoEspecifico }}</span>
-          </div>
-          <div class="ticket-amount">
-            {{ ticket.monto | currency:'ARS':'symbol':'1.2-2' }}
-          </div>
+        <div class="ticket-card__info">
+          <h3 class="ticket-card__title">{{ ticket.razon }}</h3>
+          <p class="ticket-card__subtitle">{{ ticket.fecha | date:'dd/MM/yyyy' }}</p>
         </div>
-      </mat-card-content>
-      <mat-card-actions align="end">
-        <button mat-button (click)="edit.emit(ticket.id)">EDITAR</button>
-      </mat-card-actions>
-    </mat-card>
+      </div>
+      <div class="ticket-card__body">
+        <div class="ticket-card__type">
+          {{ ticket.tipo }}
+          @if (ticket.tipo === 'OTROS') {
+            <span> - {{ ticket.tipoEspecifico }}</span>
+          }
+        </div>
+        <div class="ticket-card__amount">
+          {{ ticket.monto | currency:'ARS':'symbol':'1.2-2' }}
+        </div>
+      </div>
+      <div class="ticket-card__footer">
+        <button 
+          id="btn_edit_ticket_{{ticket.id}}"
+          class="phy-btn phy-btn--secondary phy-btn--small" 
+          (click)="edit.emit(ticket.id)"
+        >
+          EDITAR
+        </button>
+      </div>
+    </div>
   `,
     styles: [`
     .ticket-card {
@@ -70,6 +75,6 @@ import { TicketResumen } from '../../../../core/models/ticket.model';
   `]
 })
 export class TicketCardComponent {
-    @Input({ required: true }) ticket!: TicketResumen;
+    @Input({ required: true }) ticket!: ITicketResumen;
     @Output() edit = new EventEmitter<string>();
 }

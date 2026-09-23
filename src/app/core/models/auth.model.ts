@@ -1,9 +1,9 @@
-export interface Empresa {
+export interface IEmpresa {
   readonly idEmpresa: string;
   readonly descripcion: string;
 }
 
-export interface Usuario {
+export interface IUsuario {
   readonly id1: string;
   readonly id2: string;
   readonly id3: string;
@@ -15,38 +15,38 @@ export interface Usuario {
   readonly idUsuarioRelacionado: number;
 }
 
-export interface Catalogo {
+export interface ICatalogo {
   readonly cliente: string;
   readonly catalog: string;
   readonly idSerial: string;
 }
 
-export interface AuthResponse {
+export interface IAuthResponse {
   readonly token: string;
   readonly refreshToken: string;
-  readonly catalogo: Catalogo;
-  readonly empresa: Empresa | null;
-  readonly usuario: Usuario;
-  readonly empresasDisponibles: readonly Empresa[] | null;
+  readonly catalogo: ICatalogo;
+  readonly empresa: IEmpresa | null;
+  readonly usuario: IUsuario;
+  readonly empresasDisponibles: readonly IEmpresa[] | null;
 }
 
-export interface LoginRequest {
+export interface ILoginRequest {
   readonly username: string;
   readonly password: string;
   readonly idSerial: string;
   readonly idEmpresa?: string;
 }
 
-export interface EmpresaSelectRequest {
+export interface IEmpresaSelectRequest {
   readonly idEmpresa: string;
 }
 
-export interface SessionData {
+export interface ISessionData {
   readonly token: string;
   readonly refreshToken: string;
-  readonly usuario: Usuario;
-  readonly empresa: Empresa;
-  readonly catalogo: Catalogo;
+  readonly usuario: IUsuario;
+  readonly empresa: IEmpresa;
+  readonly catalogo: ICatalogo;
   readonly timestamp: number;
 }
 
@@ -57,7 +57,7 @@ export type AuthStatus =
   | 'authenticated'
   | 'error';
 
-export interface AuthError {
+export interface IAuthError {
   readonly code: string;
   readonly message: string;
   readonly statusCode?: number;

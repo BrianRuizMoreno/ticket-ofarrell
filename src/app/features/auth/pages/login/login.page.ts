@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../../core/services/auth.service';
 import { BiometricService } from '../../../../core/services/biometric.service';
-import { AuthError } from '../../../../core/models/auth.model';
+import { IAuthError } from '../../../../core/models/auth.model';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 
 @Component({
@@ -20,7 +20,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
     <div class="app-container">
       <div class="main-card">
         
-        <app-page-header></app-page-header>
+        <app-page-header [showLogout]="false"></app-page-header>
 
         <main class="card-body">
           <div class="step-config fade-in">
@@ -105,14 +105,13 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
     :host {
       display: block;
       min-height: 100vh;
-      background-color: #f3f4f6; /* bg-gray-100 */
+      background-color: #f3f4f6;
     }
 
-    /* Responsive Background */
     @media (min-width: 768px) {
       .app-container {
         padding: 1rem;
-        background-color: #49a5c5; /* md:bg-[#49a5c5] */
+        background-color: #49a5c5;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -120,9 +119,9 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
       }
       
       .main-card {
-        max-width: 28rem; /* md:max-w-md */
-        border-radius: 0.75rem; /* md:rounded-xl */
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* shadow-2xl */
+        max-width: 28rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         min-height: auto !important;
       }
     }
@@ -142,9 +141,6 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
       position: relative;
     }
 
-
-
-    /* Body */
     .card-body {
       flex-grow: 1;
       display: flex;
@@ -172,19 +168,18 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
     }
 
     .section-title {
-      font-size: 1.25rem; /* text-xl */
+      font-size: 1.25rem;
       font-weight: 700;
       color: #003366;
       margin: 0;
     }
 
     .section-subtitle {
-      font-size: 0.875rem; /* text-sm */
-      color: #6b7280; /* text-gray-500 */
+      font-size: 0.875rem;
+      color: #6b7280;
       margin: 0;
     }
 
-    /* Form */
     .config-form {
       display: flex;
       flex-direction: column;
@@ -198,9 +193,9 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
     }
 
     .input-label {
-      font-size: 0.75rem; /* text-xs */
+      font-size: 0.75rem;
       font-weight: 700;
-      color: #6b7280; /* text-gray-500 */
+      color: #6b7280;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -208,9 +203,9 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
     .form-input {
       width: 100%;
       padding: 0.75rem;
-      background-color: #f9fafb; /* bg-gray-50 */
-      border: 1px solid #d1d5db; /* border-gray-300 */
-      border-radius: 0.5rem; /* rounded-lg */
+      background-color: #f9fafb;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
       outline: none;
       font-size: 1rem;
       box-sizing: border-box;
@@ -218,7 +213,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
     }
 
     .form-input:focus {
-      box-shadow: 0 0 0 2px #55c1e6; /* ring-[#55c1e6] */
+      box-shadow: 0 0 0 2px #55c1e6;
       border-color: transparent;
     }
 
@@ -227,7 +222,6 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
       background-color: #fef2f2;
     }
 
-    /* Password field specific */
     .password-wrapper {
       position: relative;
     }
@@ -245,7 +239,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
       border: none;
       cursor: pointer;
       padding: 0;
-      color: #6b7280; /* text-gray-500 */
+      color: #6b7280;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -253,10 +247,9 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
     }
 
     .visibility-toggle:hover {
-      color: #374151; /* text-gray-700 */
+      color: #374151;
     }
 
-    /* Actions */
     .form-actions {
       margin-top: auto;
       padding-top: 1.5rem;
@@ -267,9 +260,9 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
       background-color: #003366;
       color: white;
       font-weight: 700;
-      font-size: 1.125rem; /* text-lg */
+      font-size: 1.125rem;
       padding: 1rem;
-      border-radius: 0.75rem; /* rounded-xl */
+      border-radius: 0.75rem;
       text-transform: uppercase;
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       border: none;
@@ -317,7 +310,6 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
       background-color: #f0f7ff;
     }
 
-    /* Error Message */
     .error-container {
       padding: 0.75rem;
       background-color: #fef2f2;
@@ -328,26 +320,19 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
       text-align: center;
     }
 
-    /* Footer */
     .card-footer {
       padding: 1rem;
       text-align: center;
-      background-color: #f9fafb; /* bg-gray-50 */
-      border-top: 1px solid #f3f4f6; /* border-gray-100 */
+      background-color: #f9fafb;
+      border-top: 1px solid #f3f4f6;
       flex-shrink: 0;
     }
 
     .footer-brand {
-      color: #9ca3af; /* text-gray-400 */
-      font-size: 0.75rem; /* text-xs */
+      color: #9ca3af;
+      font-size: 0.75rem;
       font-weight: 700;
       margin: 0;
-    }
-
-    .footer-version {
-      font-size: 0.625rem; /* text-[10px] */
-      color: #d1d5db; /* text-gray-300 */
-      margin-top: 0.25rem;
     }
   `]
 })
@@ -357,13 +342,12 @@ export class LoginPage implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly biometricService = inject(BiometricService);
 
-  readonly isOnline = signal<boolean>(navigator.onLine);
   readonly hidePassword = signal<boolean>(true);
   readonly isLoading = signal<boolean>(false);
   readonly biometricAvailable = signal<boolean>(false);
   readonly biometricFailed = signal<boolean>(false);
   readonly lastUsername = signal<string>(localStorage.getItem('last_success_user') || '');
-  readonly error = signal<AuthError | null>(null);
+  readonly error = signal<IAuthError | null>(null);
 
   readonly loginForm = this.fb.nonNullable.group({
     username: [this.lastUsername(), Validators.required],
@@ -398,8 +382,6 @@ export class LoginPage implements OnInit {
 
     const success = await this.biometricService.login(username);
     if (success) {
-      // Biometric verification passed — user must enter password once to authenticate.
-      // We do NOT store the password. Show a message guiding the user.
       this.error.set({
         code: 'BIO_OK',
         message: 'Identidad verificada. Ingrese su contraseña para completar el acceso.',
@@ -435,7 +417,6 @@ export class LoginPage implements OnInit {
         this.isLoading.set(false);
         const cleanUsername = username.trim();
         localStorage.setItem('last_success_user', cleanUsername);
-        // SECURITY: Never store passwords. Only store flags and non-sensitive identifiers.
 
         const isFirstTime = localStorage.getItem(`bio_enabled_${cleanUsername}`) !== 'true';
         const hasFailed = this.biometricFailed();

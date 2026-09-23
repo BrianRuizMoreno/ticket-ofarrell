@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TicketCardComponent } from '../ticket-card/ticket-card.component';
-import { TicketResumen } from '../../../../core/models/ticket.model';
+import { ITicketResumen } from '../../../../core/models/ticket.model';
 
 @Component({
     selector: 'app-ticket-list',
@@ -36,6 +36,6 @@ import { TicketResumen } from '../../../../core/models/ticket.model';
   `]
 })
 export class TicketListComponent {
-    @Input() tickets: ReadonlyArray<TicketResumen> = [];
+    @Input() tickets: ReadonlyArray<ITicketResumen> = [];
     @Output() edit = new EventEmitter<string>();
 }

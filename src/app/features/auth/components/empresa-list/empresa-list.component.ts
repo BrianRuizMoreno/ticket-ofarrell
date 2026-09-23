@@ -1,23 +1,25 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatListModule } from '@angular/material/list';
-import { MatIconModule } from '@angular/material/icon';
-import { Empresa } from '../../../../core/models/auth.model';
+import { IEmpresa } from '../../../../core/models/auth.model';
 
 @Component({
     selector: 'app-empresa-list',
     standalone: true,
-    imports: [CommonModule, MatListModule, MatIconModule],
+    imports: [CommonModule],
     template: `
-    <mat-nav-list>
+    <div class="phy-list">
       @for (empresa of empresas; track empresa.idEmpresa) {
-        <a mat-list-item (click)="select.emit(empresa.idEmpresa)">
-          <mat-icon matListItemIcon>business</mat-icon>
-          <span matListItemTitle>{{ empresa.descripcion }}</span>
-          <span matListItemLine>ID: {{ empresa.idEmpresa }}</span>
-        </a>
+        <div class="phy-list-item" (click)="select.emit(empresa.idEmpresa)">
+          <div class="phy-list-item__icon">
+            <span class="phy-icon">business</span>
+          </div>
+          <div class="phy-list-item__content">
+            <div class="phy-list-item__title">{{ empresa.descripcion }}</div>
+            <div class="phy-list-item__subtitle">ID: {{ empresa.idEmpresa }}</div>
+          </div>
+        </div>
       }
-    </mat-nav-list>
+    </div>
   `,
     styles: [`
     mat-nav-list {
@@ -29,6 +31,6 @@ import { Empresa } from '../../../../core/models/auth.model';
   `]
 })
 export class EmpresaListComponent {
-    @Input({ required: true }) empresas: ReadonlyArray<Empresa> = [];
+    @Input({ required: true }) empresas: ReadonlyArray<IEmpresa> = [];
     @Output() select = new EventEmitter<string>();
 }

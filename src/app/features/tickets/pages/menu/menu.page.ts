@@ -7,10 +7,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatRippleModule } from '@angular/material/core';
 
 import { AuthService } from '../../../../core/services/auth.service';
 import { TicketStateService } from '../../../../core/services/ticket-state.service';
-import { LugarPredefinido } from '../../../../core/models/ticket.model';
+import { ILugarPredefinido } from '../../../../core/models/ticket.model';
 
 @Component({
   selector: 'app-menu',
@@ -24,7 +25,8 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
     MatIconModule,
     MatBadgeModule,
     MatListModule,
-    MatDividerModule
+    MatDividerModule,
+    MatRippleModule
   ],
   template: `
     <div class="menu-container">
@@ -74,7 +76,7 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
           
           <mat-card class="tickets-list">
             @for (ticket of ticketsResumen(); track ticket.id) {
-              <div class="ticket-item">
+              <div class="ticket-item" (click)="editarTicket(ticket.id)" matRipple>
                 <div class="ticket-info">
                   <div class="ticket-header">
                     <span class="ticket-number">{{ $index + 1 }}.</span>
@@ -95,7 +97,7 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
                   <div class="ticket-monto">
                     {{ ticket.monto | currency:'ARS':'symbol':'1.2-2' }}
                   </div>
-                  <button mat-icon-button class="delete-button" (click)="borrarTicket(ticket.id)">
+                  <button mat-icon-button class="delete-button" (click)="borrarTicket($event, ticket.id)">
                     <mat-icon>delete_outline</mat-icon>
                   </button>
                 </div>
@@ -285,6 +287,12 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       align-items: center;
       padding: 12px 16px;
       gap: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .ticket-item:hover {
+      background-color: rgba(0, 51, 102, 0.05);
     }
 
     .ticket-info {
@@ -379,6 +387,8 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       gap: 16px;
       border-radius: 16px;
       padding: 0 24px;
+      border: none;
+      cursor: pointer;
     }
 
     .scan-button {
@@ -445,22 +455,16 @@ import { LugarPredefinido } from '../../../../core/models/ticket.model';
       width: 18px;
       height: 18px;
     }
-
-    ::ng-deep .mat-mdc-raised-button[disabled] {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
   `]
 })
 export class MenuPage {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly ticketState = inject(TicketStateService);
-
   readonly userName = computed(() => this.authService.userName());
   readonly isOnline = computed(() => this.ticketState.isOnline());
   readonly encargado = computed(() => this.ticketState.session()?.encargado ?? '');
-  readonly lugar = computed(() => this.ticketState.session()?.lugar ?? 'OFICINA' as LugarPredefinido);
+  readonly lugar = computed(() => this.ticketState.session()?.lugar ?? 'OFICINA' as ILugarPredefinido);
   readonly lugarEspecifico = computed(() => this.ticketState.session()?.lugar_especifico ?? '');
   readonly empresa = computed(() => this.authService.getEmpresaActual());
   readonly ticketsCount = computed(() => this.ticketState.ticketsCount());
@@ -468,7 +472,7 @@ export class MenuPage {
   readonly ticketsResumen = computed(() => this.ticketState.ticketsResumen());
 
   readonly lugarDisplay = computed((): string => {
-    const lugares: Record<LugarPredefinido, string> = {
+    const lugares: Record<ILugarPredefinido, string> = {
       'REMATE_FISICO': 'Remate Físico',
       'REMATE_CABANA': 'Remate Cabaña',
       'OFICINA': 'Oficina',
@@ -477,6 +481,8 @@ export class MenuPage {
     };
     return lugares[this.lugar()] ?? this.lugar();
   });
+
+
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -489,7 +495,12 @@ export class MenuPage {
     input.value = '';
   }
 
-  borrarTicket(id: string): void {
+  editarTicket(id: string): void {
+    this.router.navigate(['/tickets/form'], { state: { editId: id } });
+  }
+
+  borrarTicket(event: Event, id: string): void {
+    event.stopPropagation(); // Evita que se abra la edición al borrar
     if (confirm('¿Está seguro que desea eliminar este ticket escaneado?')) {
       this.ticketState.removeTicket(id);
     }

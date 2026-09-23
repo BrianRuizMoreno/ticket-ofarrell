@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { SessionData } from '../models/auth.model';
-import { TicketSession, Ticket } from '../models/ticket.model';
+import { ISessionData } from '../models/auth.model';
+import { ITicketSession, ITicket } from '../models/ticket.model';
 
-interface StoredTicketSession extends Omit<TicketSession, 'tickets'> {
-  readonly tickets: ReadonlyArray<Omit<Ticket, 'archivo'> & { readonly archivo: null }>;
+interface IStoredTicketSession extends Omit<ITicketSession, 'tickets'> {
+  readonly tickets: ReadonlyArray<Omit<ITicket, 'archivo'> & { readonly archivo: null }>;
 }
 
-interface QueueItem {
+interface IQueueItem {
   readonly payload: unknown;
   readonly queuedAt: number;
 }
@@ -19,7 +19,7 @@ export class StorageService {
   private readonly TICKET_SESSION_KEY = 'physis_ticket_session';
   private readonly OFFLINE_QUEUE_KEY = 'physis_offline_queue';
 
-  saveSession(session: SessionData): void {
+  saveSession(session: ISessionData): void {
     try {
       sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
     } catch (e) {
@@ -27,11 +27,11 @@ export class StorageService {
     }
   }
 
-  getSession(): SessionData | null {
+  getSession(): ISessionData | null {
     try {
       const data = sessionStorage.getItem(this.SESSION_KEY);
       if (!data) return null;
-      return JSON.parse(data) as SessionData;
+      return JSON.parse(data) as ISessionData;
     } catch (e) {
       console.error('Error leyendo sesión:', e);
       return null;
@@ -53,11 +53,11 @@ export class StorageService {
     return sessionAge < maxAge;
   }
 
-  saveTicketSession(session: TicketSession): void {
+  saveTicketSession(session: ITicketSession): void {
     try {
-      const serializableSession: StoredTicketSession = {
+      const serializableSession: IStoredTicketSession = {
         ...session,
-        tickets: session.tickets.map(t => ({
+        tickets: session.tickets.map((t: ITicket) => ({
           ...t,
           archivo: null
         }))
@@ -68,11 +68,11 @@ export class StorageService {
     }
   }
 
-  getTicketSession(): TicketSession | null {
+  getTicketSession(): ITicketSession | null {
     try {
       const data = localStorage.getItem(this.TICKET_SESSION_KEY);
       if (!data) return null;
-      return JSON.parse(data) as TicketSession;
+      return JSON.parse(data) as ITicketSession;
     } catch (e) {
       console.error('Error leyendo ticket session:', e);
       return null;
@@ -86,7 +86,7 @@ export class StorageService {
   addToOfflineQueue(payload: unknown): void {
     try {
       const queue = this.getOfflineQueue();
-      const newQueue: ReadonlyArray<QueueItem> = [
+      const newQueue: ReadonlyArray<IQueueItem> = [
         ...queue,
         { payload, queuedAt: Date.now() }
       ];
@@ -96,11 +96,11 @@ export class StorageService {
     }
   }
 
-  getOfflineQueue(): ReadonlyArray<QueueItem> {
+  getOfflineQueue(): ReadonlyArray<IQueueItem> {
     try {
       const data = localStorage.getItem(this.OFFLINE_QUEUE_KEY);
       if (!data) return [];
-      return JSON.parse(data) as QueueItem[];
+      return JSON.parse(data) as IQueueItem[];
     } catch (e) {
       return [];
     }
@@ -116,4 +116,4 @@ export class StorageService {
     newQueue.splice(index, 1);
     localStorage.setItem(this.OFFLINE_QUEUE_KEY, JSON.stringify(newQueue));
   }
-}
+}

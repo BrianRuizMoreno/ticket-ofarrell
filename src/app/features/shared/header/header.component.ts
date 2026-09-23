@@ -1,23 +1,21 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, MatToolbarModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule],
   template: `
-    <mat-toolbar color="primary">
-      <span>{{ title }}</span>
-      <span class="spacer"></span>
-      @if (showLogout) {
-        <button mat-icon-button (click)="logout.emit()" aria-label="Cerrar sesión">
-          <mat-icon>logout</mat-icon>
-        </button>
-      }
-    </mat-toolbar>
+    <header class="phy-header">
+      <div class="phy-header__container">
+        <span class="phy-header__title">{{ title }}</span>
+        <div class="phy-header__spacer"></div>
+        @if (showLogout) {
+          <button class="phy-btn phy-btn--icon" (click)="logout.emit()" aria-label="Cerrar sesión">
+            <span class="phy-icon">logout</span>
+          </button>
+        }
+      </div>
+    </header>
   `,
   styles: [`
     .spacer {

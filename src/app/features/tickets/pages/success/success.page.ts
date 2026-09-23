@@ -49,14 +49,14 @@ import { TicketStateService } from '../../../../core/services/ticket-state.servi
     .success-icon {
       width: 120px;
       height: 120px;
-      background: #27c24c;
+      background: #22c55e;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 32px;
       animation: bounce 0.6s ease infinite alternate;
-      box-shadow: 0 8px 32px rgba(39, 194, 76, 0.5);
+      box-shadow: 0 8px 32px rgba(34, 197, 94, 0.5);
     }
 
     @keyframes bounce {
@@ -94,13 +94,15 @@ import { TicketStateService } from '../../../../core/services/ticket-state.servi
       font-weight: bold;
       text-transform: uppercase;
       border-radius: 28px;
-      background-color: #55c1e6 !important;
-      color: white !important;
+      background-color: white !important;
+      color: #003366 !important;
       box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      border: none;
+      cursor: pointer;
     }
 
     .new-session-button:hover {
-      background-color: #4ab1d6 !important;
+      background-color: #f3f4f6 !important;
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(0,0,0,0.4);
     }

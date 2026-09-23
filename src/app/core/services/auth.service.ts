@@ -7,14 +7,14 @@ import { environment } from '../../../enviroments/enviroment';
 import { StorageService } from './storage.service';
 import { TicketStateService } from './ticket-state.service';
 import {
-  AuthResponse,
-  LoginRequest,
-  EmpresaSelectRequest,
-  SessionData,
-  Empresa,
+  IAuthResponse,
+  ILoginRequest,
+  IEmpresaSelectRequest,
+  ISessionData,
+  IEmpresa,
   AuthStatus,
-  AuthError,
-  Usuario
+  IAuthError,
+  IUsuario
 } from '../models/auth.model';
 
 export const SKIP_AUTH_TOKEN = new HttpContextToken<boolean>(() => false);
@@ -31,9 +31,9 @@ export class AuthService {
   private readonly API_URL = environment.apiUrl;
   private readonly SERIAL_ID = environment.serialId;
   private readonly statusSignal = signal<AuthStatus>('idle');
-  private readonly userSignal = signal<SessionData | null>(this.loadInitialUser());
-  private readonly empresasSignal = signal<ReadonlyArray<Empresa> | null>(null);
-  private readonly errorSignal = signal<AuthError | null>(null);
+  private readonly userSignal = signal<ISessionData | null>(this.loadInitialUser());
+  private readonly empresasSignal = signal<ReadonlyArray<IEmpresa> | null>(null);
+  private readonly errorSignal = signal<IAuthError | null>(null);
   readonly status = computed(() => this.statusSignal());
   readonly currentUser = computed(() => this.userSignal());
   readonly empresasDisponibles = computed(() => this.empresasSignal());
@@ -57,27 +57,27 @@ export class AuthService {
     }
   }
 
-  private loadInitialUser(): SessionData | null {
+  private loadInitialUser(): ISessionData | null {
     return this.storage.isSessionValid() ? this.storage.getSession() : null;
   }
 
-  login(username: string, password: string): Observable<AuthResponse> {
+  login(username: string, password: string): Observable<IAuthResponse> {
     this.statusSignal.set('authenticating');
     this.errorSignal.set(null);
 
-    const payload: LoginRequest = {
+    const payload: ILoginRequest = {
       username: username.trim(),
       password: password,
       idSerial: this.SERIAL_ID
     };
 
-    return this.http.post<AuthResponse>(`${this.API_URL}/core/auth`, payload).pipe(
-      tap((response: AuthResponse) => this.handleLoginResponse(response)),
+    return this.http.post<IAuthResponse>(`${this.API_URL}/core/auth`, payload).pipe(
+      tap((response: IAuthResponse) => this.handleLoginResponse(response)),
       catchError((error: HttpErrorResponse) => this.handleError(error))
     );
   }
 
-  private handleLoginResponse(response: AuthResponse): void {
+  private handleLoginResponse(response: IAuthResponse): void {
     if (response.empresa) {
       this.completeAuthentication(response);
       this.statusSignal.set('authenticated');
@@ -91,7 +91,7 @@ export class AuthService {
       this.empresasSignal.set(response.empresasDisponibles);
       this.statusSignal.set('selecting_empresa');
 
-      const partialSession: SessionData = {
+      const partialSession: ISessionData = {
         token: response.token,
         refreshToken: response.refreshToken,
         usuario: response.usuario,
@@ -105,23 +105,23 @@ export class AuthService {
     }
   }
 
-  selectEmpresa(idEmpresa: string): Observable<AuthResponse> {
+  selectEmpresa(idEmpresa: string): Observable<IAuthResponse> {
     const currentSession = this.storage.getSession();
 
     if (!currentSession) {
       return throwError(() => new Error('No hay sesión activa'));
     }
 
-    const payload: EmpresaSelectRequest = { idEmpresa };
+    const payload: IEmpresaSelectRequest = { idEmpresa };
 
-    return this.http.patch<AuthResponse>(
+    return this.http.patch<IAuthResponse>(
       `${this.API_URL}/core/auth/empresa`,
       payload,
       {
         headers: { 'Authorization': `Bearer ${currentSession.token}` }
       }
     ).pipe(
-      tap((response: AuthResponse) => {
+      tap((response: IAuthResponse) => {
         this.completeAuthentication(response);
         this.statusSignal.set('authenticated');
         this.empresasSignal.set(null);
@@ -136,12 +136,12 @@ export class AuthService {
     );
   }
 
-  private completeAuthentication(response: AuthResponse): void {
+  private completeAuthentication(response: IAuthResponse): void {
     if (!response.empresa) {
       throw new Error('Respuesta sin empresa válida');
     }
 
-    const sessionData: SessionData = {
+    const sessionData: ISessionData = {
       token: response.token,
       refreshToken: response.refreshToken,
       usuario: response.usuario,
@@ -207,7 +207,7 @@ export class AuthService {
       }
     }
 
-    const authError: AuthError = {
+    const authError: IAuthError = {
       code: errorCode,
       message: errorMessage,
       statusCode: error.status
