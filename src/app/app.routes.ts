@@ -22,37 +22,16 @@ export const routes: Routes = [
     canActivate: [reverseEmpresaGuard]
   },
   {
-    path: 'session-config',
-    loadComponent: () => import('./features/auth/pages/session-config/session-config.page').then(m => m.SessionConfigPage),
-    canActivate: [authGuard, empresaGuard]
-  },
-  {
-    path: 'tickets',
+    path: 'validador',
     canActivate: [authGuard, empresaGuard],
     children: [
       {
-        path: 'menu',
-        loadComponent: () => import('./features/tickets/pages/menu/menu.page').then(m => m.MenuPage)
+        path: '',
+        loadComponent: () => import('./features/validador/pages/lista-rendiciones/lista-rendiciones.page').then(m => m.ListaRendicionesPage)
       },
       {
-        path: 'scanner',
-        loadComponent: () => import('./features/tickets/pages/scanner/scanner.page').then(m => m.ScannerPage)
-      },
-      {
-        path: 'form',
-        loadComponent: () => import('./features/tickets/pages/form/form.page').then(m => m.FormPage)
-      },
-      {
-        path: 'decision',
-        loadComponent: () => import('./features/tickets/pages/decision/decision.page').then(m => m.DecisionPage)
-      },
-      {
-        path: 'confirm',
-        loadComponent: () => import('./features/tickets/pages/confirm/confirm.page').then(m => m.ConfirmPage)
-      },
-      {
-        path: 'success',
-        loadComponent: () => import('./features/tickets/pages/success/success.page').then(m => m.SuccessPage)
+        path: 'detalle/:id',
+        loadComponent: () => import('./features/validador/pages/detalle-rendicion/detalle-rendicion.page').then(m => m.DetalleRendicionPage)
       }
     ]
   },

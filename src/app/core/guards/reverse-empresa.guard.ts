@@ -20,7 +20,7 @@ export const reverseEmpresaGuard: CanActivateFn = ():
   if (!authService.requiresEmpresaSelection()) {
 
     return authService.isAuthenticated()
-      ? router.createUrlTree(['/tickets/menu'])
+      ? router.createUrlTree(['/validador'])
       : router.createUrlTree(['/login']);
   }
   return true;

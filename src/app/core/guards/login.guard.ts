@@ -4,10 +4,9 @@ import {
   Router,
   UrlTree
 } from '@angular/router';
-import { Observable, map, take } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
-import { TicketStateService } from '../services/ticket-state.service';
 
 export const loginGuard: CanActivateFn = ():
   | Observable<boolean | UrlTree>
@@ -16,14 +15,10 @@ export const loginGuard: CanActivateFn = ():
   | UrlTree => {
 
   const authService = inject(AuthService);
-  const ticketState = inject(TicketStateService);
   const router = inject(Router);
 
   if (authService.isAuthenticated()) {
-    if (ticketState.hasSession()) {
-      return router.createUrlTree(['/tickets/menu']);
-    }
-    return router.createUrlTree(['/session-config']);
+    return router.createUrlTree(['/validador']);
   }
   return true;
 };

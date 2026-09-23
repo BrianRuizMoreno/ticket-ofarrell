@@ -1,4 +1,4 @@
-import { JsonObject, JsonValue } from '../types/json.types';
+import { JsonObject } from '../types/json.types';
 
 export type TipoGasto =
   | 'COMBUSTIBLE'
@@ -17,15 +17,14 @@ export type MetodoPago =
   | 'Tarjeta de Débito'
   | 'Transferencia';
 
-export type LugarPredefinido =
+export type ILugarPredefinido =
   | 'REMATE_FISICO'
   | 'REMATE_CABANA'
   | 'OFICINA'
   | 'CORPORATIVO'
   | 'OTRO';
 
-
-export interface OCROriginalData extends JsonObject {
+export interface IOCROriginalData extends JsonObject {
   readonly razon_social?: string;
   readonly cuit?: string;
   readonly n_operacion?: string;
@@ -40,9 +39,10 @@ export interface OCROriginalData extends JsonObject {
   readonly ticket_number?: string;
   readonly numero?: string;
   readonly impuesto?: number;
+  readonly items?: string[];
 }
 
-export interface TicketModifiedData {
+export interface ITicketModifiedData {
   razon_social: string;
   cuit: string;
   n_operacion: string;
@@ -56,50 +56,3 @@ export interface TicketModifiedData {
 }
 
 export type SyncStatus = 'pending' | 'synced' | 'error' | 'syncing';
-
-export interface Ticket {
-  readonly id: string;
-  readonly archivo: File | null;
-  readonly preview: string;
-  readonly datos_modificados: TicketModifiedData;
-  readonly datos_ocr_original: OCROriginalData;
-  readonly fue_modificado: boolean;
-  readonly timestamp: number;
-  readonly sync_status: SyncStatus;
-}
-
-export interface TicketSession {
-  readonly encargado: string;
-  readonly lugar: LugarPredefinido;
-  readonly lugar_especifico: string;
-  readonly tickets: ReadonlyArray<Ticket>;
-  readonly fecha_inicio: string;
-}
-
-export interface TicketPayload {
-  readonly session: {
-    readonly encargado: string;
-    readonly lugar: string;
-    readonly lugar_especifico: string;
-  };
-  readonly tickets: ReadonlyArray<{
-    readonly id: string;
-    readonly archivo_nombre: string | null;
-    readonly ocr_original: OCROriginalData;
-    readonly modificado: TicketModifiedData;
-  }>;
-  readonly totales: {
-    readonly monto: number;
-    readonly iva: number;
-  };
-}
-
-export interface TicketResumen {
-  readonly id: string;
-  readonly razon: string;
-  readonly tipo: TipoGasto;
-  readonly tipoEspecifico: string;
-  readonly monto: number;
-  readonly fecha: string;
-  readonly fueModificado: boolean;
-}
