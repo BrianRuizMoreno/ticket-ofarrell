@@ -8,7 +8,7 @@ node_modules/
 dist/
 build/
 tmp/
-out-攜proc/
+out-tsc/
 
 .DS_Store
 Thumbs.db

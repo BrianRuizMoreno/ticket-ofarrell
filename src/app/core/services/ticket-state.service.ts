@@ -181,8 +181,12 @@ export class TicketStateService {
   ): ITicket {
     const fueModificado = this.checkIfModified(ocrData, modifiedData);
 
+    const safeUuid = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
     return {
-      id: `TICKET_${Date.now()}_${crypto.randomUUID()}`,
+      id: `TICKET_${Date.now()}_${safeUuid}`,
       archivo,
       preview,
       datos_ocr_original: ocrData,

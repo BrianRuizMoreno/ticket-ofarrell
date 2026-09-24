@@ -23,6 +23,13 @@ import {
   MetodoPago,
 } from '../../../../core/models/ticket.model';
 
+interface ITicketNavigationState {
+  readonly editId?: string;
+  readonly file?: File | null;
+  readonly preview?: string;
+  readonly ocrData?: IOCROriginalData;
+}
+
 interface FormState {
   file: File | null;
   preview: string;
@@ -477,16 +484,17 @@ export class FormPage implements OnInit {
 
   openFullImage(): void {
     if (this.state.preview) {
-      const win = window.open();
+      const win = window.open('', '_blank', 'noopener,noreferrer');
       if (win) {
-        win.document.write(`<img src="${this.state.preview}" style="max-width:100%">`);
+        win.opener = null;
+        win.location.href = this.state.preview;
       }
     }
   }
 
   constructor() {
     const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state as any;
+    const state = navigation?.extras?.state as ITicketNavigationState | undefined;
 
     if (state?.editId) {
       this.editId = state.editId;
@@ -513,7 +521,7 @@ export class FormPage implements OnInit {
         return;
       }
     } else if (!this.state.file) {
-      const state = history.state as any;
+      const state = history.state as ITicketNavigationState | undefined;
       if (state?.editId) {
         this.editId = state.editId;
         const ticket = this.ticketState.getTicketById(this.editId!);
@@ -606,6 +614,14 @@ export class FormPage implements OnInit {
 
     const partes = fechaStr.split(/[\/\-]/);
     if (partes.length === 3) {
+      // Formato ISO: YYYY-MM-DD
+      if (partes[0].length === 4) {
+        const anio = parseInt(partes[0], 10);
+        const mes = parseInt(partes[1], 10) - 1;
+        const dia = parseInt(partes[2], 10);
+        return new Date(anio, mes, dia);
+      }
+      // Formato tradicional: DD/MM/YYYY o DD-MM-YYYY
       const dia = parseInt(partes[0], 10);
       const mes = parseInt(partes[1], 10) - 1;
       const anio = partes[2].length === 2 ? 2000 + parseInt(partes[2], 10) : parseInt(partes[2], 10);

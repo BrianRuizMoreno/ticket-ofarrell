@@ -39,21 +39,23 @@ export class SyncService {
 
     this.isSyncing = true;
 
-    for (const item of items) {
-      try {
-        await firstValueFrom(
-          this.http.post<ISyncResponse>(this.apiUrl, item.data).pipe(
-            retry({ count: 3, delay: 2000 })
-          )
-        );
+    try {
+      for (const item of items) {
+        try {
+          await firstValueFrom(
+            this.http.post<ISyncResponse>(this.apiUrl, item.data).pipe(
+              retry({ count: 3, delay: 2000 })
+            )
+          );
 
-        await this.offlineStorage.deleteSession(item.id);
-      } catch (err) {
-        console.error('Error sincronizando sesión tras 3 reintentos:', item.id, err);
+          await this.offlineStorage.deleteSession(item.id);
+        } catch (err) {
+          console.error('Error sincronizando sesión tras 3 reintentos:', item.id, err);
+        }
       }
+    } finally {
+      this.isSyncing = false;
     }
-
-    this.isSyncing = false;
   }
 
   syncSession(session: ITicketSession): Observable<ISyncResponse> {

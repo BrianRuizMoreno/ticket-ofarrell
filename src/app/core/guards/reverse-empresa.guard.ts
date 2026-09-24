@@ -4,7 +4,7 @@ import {
   Router,
   UrlTree
 } from '@angular/router';
-import { Observable, map, take } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 

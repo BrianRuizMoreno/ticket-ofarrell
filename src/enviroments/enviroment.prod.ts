@@ -3,8 +3,8 @@ import { Environment } from './enviroment.interface';
 export const environment: Environment = {
   production: true,
   apiUrl: 'https://autogestion.ivanofarrell.com.ar/phy2service/api',
-  ocrEndpoint: 'http://localhost:3000/api/ai/analizar-ticket',
-  saveWebhook: 'http://localhost:3000/api/rendiciones/recibir',
+  ocrEndpoint: 'https://api.autoscaner.pro/api/ai/analizar-ticket',
+  saveWebhook: 'https://api.autoscaner.pro/api/rendiciones/recibir',
   serialId: '00438_01',
   appName: 'Tickets Physis',
   version: '2.0.0',

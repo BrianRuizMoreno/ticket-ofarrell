@@ -25,9 +25,13 @@ export class StorageService {
     try {
       const data = sessionStorage.getItem(this.SESSION_KEY);
       if (!data) return null;
-      return JSON.parse(data) as ISessionData;
+      const parsed = JSON.parse(data) as unknown;
+      if (parsed && typeof parsed === 'object' && 'token' in parsed) {
+        return parsed as ISessionData;
+      }
+      return null;
     } catch (e) {
-      console.error('Error leyendo sesión:', e);
+      console.warn('Error leyendo sesión:', e);
       return null;
     }
   }
@@ -48,17 +52,31 @@ export class StorageService {
   }
 
   saveTicketSession(session: ITicketSession): void {
+    const serializableSession: IStoredTicketSession = {
+      ...session,
+      tickets: session.tickets.map((t: ITicket) => ({
+        ...t,
+        archivo: null
+      }))
+    };
+
     try {
-      const serializableSession: IStoredTicketSession = {
-        ...session,
-        tickets: session.tickets.map((t: ITicket) => ({
-          ...t,
-          archivo: null
-        }))
-      };
       localStorage.setItem(this.TICKET_SESSION_KEY, JSON.stringify(serializableSession));
-    } catch (e) {
-      console.error('Error guardando ticket session:', e);
+    } catch (e: unknown) {
+      console.warn('Error guardando ticket session en localStorage (posible cuota excedida). Intentando versión sin preview...', e);
+      try {
+        // En caso de cuota excedida, guardamos los metadatos sin la imagen base64 pesada
+        const lightweightSession: IStoredTicketSession = {
+          ...serializableSession,
+          tickets: serializableSession.tickets.map(t => ({
+            ...t,
+            preview: ''
+          }))
+        };
+        localStorage.setItem(this.TICKET_SESSION_KEY, JSON.stringify(lightweightSession));
+      } catch (innerError) {
+        console.error('No se pudo guardar la sesión de tickets en localStorage:', innerError);
+      }
     }
   }
 
@@ -68,7 +86,7 @@ export class StorageService {
       if (!data) return null;
       return JSON.parse(data) as ITicketSession;
     } catch (e) {
-      console.error('Error leyendo ticket session:', e);
+      console.warn('Error leyendo ticket session:', e);
       return null;
     }
   }
