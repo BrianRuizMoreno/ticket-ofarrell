@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { environment } from '../../../../enviroments/enviroment';
 import { ITicketModifiedData, IOCROriginalData } from '../../../core/models/ticket.model';
 
@@ -9,7 +10,7 @@ export interface IRendicion {
   empresa?: string;
   empresa_especifica?: string;
   fecha_recepcion?: string;
-  estado: 'pendiente' | 'aprobada' | 'rechazada';
+  estado: 'pendiente' | 'aprobada' | 'rechazada' | 'eliminada';
   total: number;
   cantidad_tickets?: number;
   observaciones?: string;
@@ -24,30 +25,39 @@ export interface IRendicionTicket {
   modificado: ITicketModifiedData;
 }
 
+export interface IRendicionActionResponse {
+  readonly success: boolean;
+  readonly message?: string;
+  readonly rendicion?: IRendicion;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class RendicionesService {
-  private http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/api/rendiciones';
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = environment.rendicionesApiUrl || 'http://localhost:3000/api/rendiciones';
 
-  getRendiciones() {
-    // Añadimos un "cache-buster" para evitar que el navegador nos devuelva una versión "fantasma"
+  getRendiciones(): Observable<IRendicion[]> {
     return this.http.get<IRendicion[]>(`${this.apiUrl}?t=${new Date().getTime()}`);
   }
 
-  actualizarRendicion(rendicion: IRendicion) {
-    return this.http.patch(`${this.apiUrl}/${rendicion.id}`, {
+  getRendicion(id: string): Observable<IRendicion> {
+    return this.http.get<IRendicion>(`${this.apiUrl}/${id}`);
+  }
+
+  actualizarRendicion(rendicion: IRendicion): Observable<IRendicionActionResponse> {
+    return this.http.patch<IRendicionActionResponse>(`${this.apiUrl}/${rendicion.id}`, {
       estado: rendicion.estado,
       observaciones: rendicion.observaciones
     });
   }
 
-  limpiarRendiciones() {
-    return this.http.delete(`${this.apiUrl}/clear`);
+  limpiarRendiciones(): Observable<IRendicionActionResponse> {
+    return this.http.delete<IRendicionActionResponse>(`${this.apiUrl}/clear`);
   }
 
-  eliminarRendicion(id: string) {
-    return this.http.delete(`${this.apiUrl}/${id}`);
+  eliminarRendicion(id: string): Observable<IRendicionActionResponse> {
+    return this.http.delete<IRendicionActionResponse>(`${this.apiUrl}/${id}`);
   }
 }

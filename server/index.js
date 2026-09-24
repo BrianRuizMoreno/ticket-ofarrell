@@ -1,74 +1,82 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const multer = require('multer');
-const fs = require('fs');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const IS_PROD = process.env.NODE_ENV === 'production';
 
-// Configuración de Google Gemini
+// ----------------------------------------------------
+// SEGURIDAD: Rate Limiting & CORS
+// ----------------------------------------------------
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 300, // Máximo 300 peticiones por IP cada 15 min
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Demasiadas solicitudes desde esta IP, por favor intente nuevamente en 15 minutos.' }
+});
+app.use(limiter);
+
+const defaultAllowedOrigins = [
+    'https://autoscaner.pro',
+    'https://portal.autoscaner.pro',
+    'https://api.autoscaner.pro',
+    'http://localhost:4200',
+    'http://localhost:4201',
+    'http://localhost:3000'
+];
+
+const envOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : [];
+
+const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...envOrigins])];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Permitir solicitudes sin origen (como curl o apps móviles) o si está en la lista blanca
+        if (!origin || allowedOrigins.includes(origin) || !IS_PROD) {
+            callback(null, true);
+        } else {
+            callback(new Error(`Origen ${origin} no permitido por política CORS.`));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+// Middlewares estándar
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+
+// Servir archivos estáticos de comprobantes (/uploads)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ----------------------------------------------------
+// CONFIGURACIÓN DE IA (Google Gemini Cascada)
+// ----------------------------------------------------
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
-    console.warn('⚠️ AVISO: GEMINI_API_KEY no está definida en .env');
+    console.warn('⚠️ AVISO: GEMINI_API_KEY no está configurada en .env. El OCR responderá con error hasta que se configure.');
 }
-const genAI = new GoogleGenerativeAI(apiKey || '');
+const genAI = new GoogleGenerativeAI(apiKey || 'DISABLED');
 
-// Cascada oficial 2026: Primario 2.5 Flash-Lite, Respaldo 2.5 Flash
 const PRIMARY_MODEL = process.env.GEMINI_PRIMARY_MODEL || 'gemini-2.5-flash-lite';
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash';
 
-// Configuración de Multer para recibir imágenes de tickets
-const storage = multer.memoryStorage();
 const upload = multer({
-    storage: storage,
-    limits: { fileSize: 25 * 1024 * 1024 } // Límite de 25MB por comprobante
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 25 * 1024 * 1024 } // 25MB
 });
 
-app.use(cors());
-app.use(bodyParser.json({ limit: '50mb' }));
-
-// Persistencia en disco local como respaldo contra reinicios (Pre-PostgreSQL)
-const DATA_DIR = path.join(__dirname, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'rendiciones.json');
-
-function initDataStorage() {
-    if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    if (!fs.existsSync(DATA_FILE)) {
-        fs.writeFileSync(DATA_FILE, JSON.stringify([]), 'utf-8');
-    }
-}
-
-function loadRendiciones() {
-    try {
-        initDataStorage();
-        const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-        return JSON.parse(raw);
-    } catch (e) {
-        console.error('Error cargando rendiciones desde disco:', e);
-        return [];
-    }
-}
-
-function persistRendiciones(data) {
-    try {
-        initDataStorage();
-        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
-    } catch (e) {
-        console.error('Error guardando rendiciones en disco:', e);
-    }
-}
-
-let rendiciones = loadRendiciones();
-
-/**
- * Esquema estructurado estricto para respuesta de Gemini (Structured Outputs)
- */
 const OCR_RESPONSE_SCHEMA = {
     type: 'OBJECT',
     properties: {
@@ -109,16 +117,17 @@ Analiza minuciosamente el comprobante adjunto y extrae:
 - total: Importe final total del comprobante.
 - items: Lista de productos o conceptos adquiridos.`;
 
-/**
- * Ejecuta la llamada a Gemini con cascada (primario -> fallback) y Structured Outputs
- */
 async function executeGeminiCascade(imagePart) {
+    if (!apiKey) {
+        throw new Error('Servicio OCR no disponible: Clave GEMINI_API_KEY no configurada en el servidor.');
+    }
+
     const models = [PRIMARY_MODEL, FALLBACK_MODEL];
     let lastError = null;
 
     for (const modelName of models) {
         try {
-            console.log(`[OCR Backend] Intentando con modelo: ${modelName}`);
+            console.log(`[OCR Backend] Invocando modelo: ${modelName}`);
             const model = genAI.getGenerativeModel({
                 model: modelName,
                 generationConfig: {
@@ -137,22 +146,36 @@ async function executeGeminiCascade(imagePart) {
                 return parsed;
             }
         } catch (err) {
-            console.warn(`[OCR Backend] Falla con ${modelName}:`, err.message || err);
+            console.warn(`[OCR Backend] Fallo en modelo ${modelName}:`, err.message || err);
             lastError = err;
         }
     }
 
-    throw lastError || new Error('No se pudo procesar el comprobante tras agotar la cascada de IA.');
+    throw lastError || new Error('No se pudo procesar el comprobante tras agotar los modelos de IA.');
 }
 
+// ----------------------------------------------------
+// ENDPOINTS
+// ----------------------------------------------------
+
 /**
- * ENDPOINT: Analizar Ticket con IA (Gemini Cascada en Servidor)
- * Recibe FormData con campo 'imagen'
+ * Health check
+ */
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        postgres: db.isUsingPostgres(),
+        timestamp: new Date().toISOString()
+    });
+});
+
+/**
+ * ENDPOINT: Analizar Ticket con IA
  */
 app.post('/api/ai/analizar-ticket', upload.single('imagen'), async (req, res) => {
     try {
         if (!req.file) {
-            return res.status(400).json({ error: 'No se proporcionó ninguna imagen de comprobante' });
+            return res.status(400).json({ error: 'No se proporcionó ninguna imagen de comprobante.' });
         }
 
         const imagePart = {
@@ -165,108 +188,151 @@ app.post('/api/ai/analizar-ticket', upload.single('imagen'), async (req, res) =>
         const result = await executeGeminiCascade(imagePart);
         res.json(result);
     } catch (error) {
-        console.error('❌ Error analizando comprobante:', error.message || error);
+        console.error('❌ Error en /api/ai/analizar-ticket:', error.message || error);
         res.status(500).json({
             error: 'Error al procesar el comprobante con IA',
-            details: error.message || 'Fallo de inferencia'
+            details: IS_PROD ? undefined : (error.message || 'Error de procesamiento')
         });
     }
 });
 
 /**
- * ENDPOINT: Recibir rendiciones completas desde Scanner
+ * ENDPOINT: Recibir rendiciones desde Scanner
  */
-app.post('/api/rendiciones/recibir', (req, res) => {
-    const data = req.body;
+app.post('/api/rendiciones/recibir', async (req, res) => {
+    try {
+        const data = req.body;
+        if (!data || !data.tickets || !Array.isArray(data.tickets)) {
+            return res.status(400).json({ error: 'Payload de rendición inválido: se requiere arreglo de tickets.' });
+        }
 
-    if (!data || !data.tickets) {
-        return res.status(400).json({ error: 'Payload de rendición inválido' });
+        const nuevaRendicion = {
+            id: data.id || `R-${Date.now()}`,
+            usuario: data.usuario || data.session?.encargado || 'Desconocido',
+            empresa: data.empresa || data.session?.lugar || 'Empresa No Def.',
+            empresa_especifica: data.session?.lugar_especifico || '',
+            fecha_recepcion: new Date().toISOString(),
+            estado: 'pendiente',
+            total: Number(data.total || data.totales?.monto || 0),
+            cantidad_tickets: data.tickets.length,
+            observaciones: data.observaciones || '',
+            totales: data.totales || { monto: Number(data.total || 0), iva: 0 },
+            tickets: data.tickets
+        };
+
+        const saved = await db.saveRendicion(nuevaRendicion);
+        console.log(`[Rendición Recibida] ID: ${saved.id} - ${saved.tickets.length} tickets - Total: $${saved.total}`);
+
+        res.json({ success: true, id: saved.id });
+    } catch (error) {
+        console.error('❌ Error recibiendo rendición:', error);
+        res.status(500).json({
+            error: 'Error al procesar la rendición',
+            details: IS_PROD ? undefined : error.message
+        });
     }
-
-    const nuevaRendicion = {
-        id: data.id || `R-${Date.now()}`,
-        usuario: data.usuario || data.session?.encargado || 'Desconocido',
-        empresa: data.empresa || data.session?.lugar || 'Empresa No Def.',
-        empresa_especifica: data.session?.lugar_especifico || '',
-        fecha_recepcion: new Date().toISOString(),
-        estado: 'pendiente',
-        total: Number(data.total || data.totales?.monto || 0),
-        tickets: (data.tickets || []).map(t => ({
-            ...t,
-            modificado: {
-                ...t.modificado,
-                tipo_gasto_especifico: t.modificado?.tipo_gasto_especifico || ''
-            },
-            imagen_base64: t.imagen_base64 || null
-        }))
-    };
-
-    const index = rendiciones.findIndex(r => r.id === nuevaRendicion.id);
-    if (index !== -1) {
-        rendiciones[index] = nuevaRendicion;
-    } else {
-        rendiciones.unshift(nuevaRendicion);
-    }
-
-    persistRendiciones(rendiciones);
-    console.log(`[Rendición Recibida] ID: ${nuevaRendicion.id} - ${nuevaRendicion.tickets.length} tickets - Total: $${nuevaRendicion.total}`);
-
-    res.json({ success: true, id: nuevaRendicion.id });
 });
 
 /**
- * ENDPOINTS: Gestión de Rendiciones (Validator Dashboard)
+ * ENDPOINT: Listar rendiciones activas
  */
-app.get('/api/rendiciones', (req, res) => {
-    const activas = rendiciones.filter(r => r.estado !== 'eliminada');
-    res.json(activas);
-});
-
-app.get('/api/rendiciones/:id', (req, res) => {
-    const { id } = req.params;
-    const rendicion = rendiciones.find(r => r.id === id && r.estado !== 'eliminada');
-    if (rendicion) {
-        res.json(rendicion);
-    } else {
-        res.status(404).json({ success: false, message: 'Rendición no encontrada' });
+app.get('/api/rendiciones', async (req, res) => {
+    try {
+        const rendiciones = await db.getRendiciones();
+        res.json(rendiciones);
+    } catch (error) {
+        console.error('❌ Error listando rendiciones:', error);
+        res.status(500).json({ error: 'Error al obtener rendiciones' });
     }
 });
 
-app.patch('/api/rendiciones/:id', (req, res) => {
-    const { id } = req.params;
-    const { estado, observaciones } = req.body;
-
-    const rendicion = rendiciones.find(r => r.id === id);
-    if (rendicion) {
-        if (estado) rendicion.estado = estado;
-        if (observaciones !== undefined) rendicion.observaciones = observaciones;
-        persistRendiciones(rendiciones);
-        res.json({ success: true, rendicion });
-    } else {
-        res.status(404).json({ success: false, message: 'Rendición no encontrada' });
+/**
+ * IMPORTANTE: /api/rendiciones/clear DEBE estar ANTES de /:id para que Express no lo capture como parámetro :id
+ */
+app.delete('/api/rendiciones/clear', async (req, res) => {
+    try {
+        await db.clearRendiciones();
+        res.json({ success: true, message: 'Todas las rendiciones han sido eliminadas' });
+    } catch (error) {
+        console.error('❌ Error vaciando rendiciones:', error);
+        res.status(500).json({ error: 'Error al eliminar rendiciones' });
     }
 });
 
-app.delete('/api/rendiciones/:id', (req, res) => {
-    const { id } = req.params;
-    const rendicion = rendiciones.find(r => r.id === id);
-
-    if (rendicion) {
-        rendicion.estado = 'eliminada';
-        persistRendiciones(rendiciones);
-        res.json({ success: true, message: 'Rendición eliminada lógicamente' });
-    } else {
-        res.status(404).json({ success: false, message: 'Rendición no encontrada' });
+/**
+ * ENDPOINT: Obtener rendición por ID
+ */
+app.get('/api/rendiciones/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const rendicion = await db.getRendicionById(id);
+        if (rendicion) {
+            res.json(rendicion);
+        } else {
+            res.status(404).json({ success: false, message: 'Rendición no encontrada' });
+        }
+    } catch (error) {
+        console.error('❌ Error obteniendo rendición:', error);
+        res.status(500).json({ error: 'Error al obtener la rendición' });
     }
 });
 
-app.delete('/api/rendiciones/clear', (req, res) => {
-    rendiciones = [];
-    persistRendiciones(rendiciones);
-    res.json({ success: true, message: 'Todas las rendiciones han sido eliminadas' });
+/**
+ * ENDPOINT: Actualizar estado y observaciones de rendición
+ */
+app.patch('/api/rendiciones/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { estado, observaciones } = req.body;
+
+        const estadosValidos = ['pendiente', 'aprobada', 'rechazada', 'eliminada'];
+        if (estado && !estadosValidos.includes(estado)) {
+            return res.status(400).json({
+                error: `Estado inválido: "${estado}". Estados permitidos: ${estadosValidos.join(', ')}`
+            });
+        }
+
+        const updated = await db.updateRendicion(id, { estado, observaciones });
+        if (updated) {
+            res.json({ success: true, rendicion: updated });
+        } else {
+            res.status(404).json({ success: false, message: 'Rendición no encontrada' });
+        }
+    } catch (error) {
+        console.error('❌ Error actualizando rendición:', error);
+        res.status(500).json({ error: 'Error al actualizar rendición' });
+    }
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Backend de ScannerValidator corriendo en http://localhost:${PORT}`);
-    console.log(`🤖 Modelos Gemini configurados: Primario=${PRIMARY_MODEL}, Respaldo=${FALLBACK_MODEL}`);
+/**
+ * ENDPOINT: Eliminación lógica de rendición
+ */
+app.delete('/api/rendiciones/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const success = await db.deleteRendicion(id);
+        if (success) {
+            res.json({ success: true, message: 'Rendición eliminada lógicamente' });
+        } else {
+            res.status(404).json({ success: false, message: 'Rendición no encontrada' });
+        }
+    } catch (error) {
+        console.error('❌ Error eliminando rendición:', error);
+        res.status(500).json({ error: 'Error al eliminar rendición' });
+    }
 });
+
+// Inicializar base de datos y arrancar servidor
+(async () => {
+    try {
+        await db.initDb();
+        app.listen(PORT, () => {
+            console.log(`🚀 Backend de ScannerValidator corriendo en puerto ${PORT}`);
+            console.log(`📡 Modo de almacenamiento: ${db.isUsingPostgres() ? 'PostgreSQL' : 'JSON local'}`);
+            console.log(`🔒 Orígenes CORS permitidos: ${allowedOrigins.join(', ')}`);
+        });
+    } catch (err) {
+        console.error('❌ Error fatal iniciando el servidor:', err);
+        process.exit(1);
+    }
+})();

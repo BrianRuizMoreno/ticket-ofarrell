@@ -5,66 +5,75 @@ import { IRendicion } from '../../features/validador/services/rendiciones.servic
   providedIn: 'root'
 })
 export class LocalDbService {
-  private dbName = 'ScannerValidatorDB';
-  private dbVersion = 1;
-  private db: IDBDatabase | null = null;
+  private readonly dbName = 'ScannerValidatorDB';
+  private readonly dbVersion = 1;
+  private readonly dbReady: Promise<IDBDatabase>;
 
   constructor() {
-    this.initDB();
+    this.dbReady = this.initDB();
   }
 
-  private initDB() {
-    const request = indexedDB.open(this.dbName, this.dbVersion);
-
-    request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains('rendiciones')) {
-        db.createObjectStore('rendiciones', { keyPath: 'id' });
+  private initDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+      if (typeof indexedDB === 'undefined') {
+        reject(new Error('IndexedDB no está soportada en este entorno.'));
+        return;
       }
-    };
 
-    request.onsuccess = (event: Event) => {
-      this.db = (event.target as IDBOpenDBRequest).result;
-      console.log('IndexedDB inicializada correctamente');
-    };
+      const request = indexedDB.open(this.dbName, this.dbVersion);
 
-    request.onerror = (event: Event) => {
-      console.error('Error al inicializar IndexedDB:', (event.target as IDBOpenDBRequest).error);
-    };
+      request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains('rendiciones')) {
+          db.createObjectStore('rendiciones', { keyPath: 'id' });
+        }
+      };
+
+      request.onsuccess = (event: Event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        resolve(db);
+      };
+
+      request.onerror = (event: Event) => {
+        reject((event.target as IDBOpenDBRequest).error);
+      };
+    });
   }
 
   /** Guarda una lista de rendiciones en la base de datos local */
   async guardarRendiciones(rendiciones: IRendicion[]): Promise<void> {
-    if (!this.db) return;
+    try {
+      const db = await this.dbReady;
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['rendiciones'], 'readwrite');
+        const store = transaction.objectStore('rendiciones');
 
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(['rendiciones'], 'readwrite');
-      const store = transaction.objectStore('rendiciones');
+        store.clear();
+        rendiciones.forEach(r => store.put(r));
 
-      // Limpiamos el almacén antes de guardar la nueva lista para sincronizar borrados
-      store.clear();
-      rendiciones.forEach(r => store.put(r));
-
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-    });
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    } catch (e) {
+      console.warn('No se pudo guardar en IndexedDB:', e);
+    }
   }
 
   /** Obtiene todas las rendiciones guardadas localmente */
   async obtenerRendiciones(): Promise<IRendicion[]> {
-    if (!this.db) {
-        // Si no está inicializada aún, esperamos un poco
-        await new Promise(resolve => setTimeout(resolve, 500));
-        if (!this.db) return [];
+    try {
+      const db = await this.dbReady;
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['rendiciones'], 'readonly');
+        const store = transaction.objectStore('rendiciones');
+        const request = store.getAll();
+
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
+    } catch (e) {
+      console.warn('No se pudo leer de IndexedDB:', e);
+      return [];
     }
-
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(['rendiciones'], 'readonly');
-      const store = transaction.objectStore('rendiciones');
-      const request = store.getAll();
-
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
   }
 }

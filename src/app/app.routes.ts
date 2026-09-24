@@ -30,6 +30,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/validador/pages/lista-rendiciones/lista-rendiciones.page').then(m => m.ListaRendicionesPage)
       },
       {
+        path: 'lista',
+        redirectTo: '',
+        pathMatch: 'full'
+      },
+      {
         path: 'detalle/:id',
         loadComponent: () => import('./features/validador/pages/detalle-rendicion/detalle-rendicion.page').then(m => m.DetalleRendicionPage)
       }

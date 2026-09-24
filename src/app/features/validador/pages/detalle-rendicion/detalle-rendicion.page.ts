@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDatepickerModule, MatDatepickerInputEvent } from '@angular/material/datepicker';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TextFieldModule } from '@angular/cdk/text-field';
@@ -16,6 +16,7 @@ import { TextFieldModule } from '@angular/cdk/text-field';
 import { ValidadorStateService } from '../../services/validador-state.service';
 import { IRendicion, IRendicionTicket, RendicionesService } from '../../services/rendiciones.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { TipoGasto } from '../../../../core/models/ticket.model';
 
 @Component({
   selector: 'app-detalle-rendicion',
@@ -35,7 +36,8 @@ import { AuthService } from '../../../../core/services/auth.service';
     MatDividerModule,
     MatDatepickerModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    TextFieldModule
   ],
   template: `
     <div class="app-container" *ngIf="rendicion()">
@@ -681,22 +683,35 @@ export class DetalleRendicionPage implements OnInit {
     'COMIDA', 'COMBUSTIBLE', 'TRANSPORTE', 'PERSONAL', 'PEAJES', 'SERVICIOS', 'LIBRERIA', 'OTROS'
   ];
 
-  ngOnInit() {
+  ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       const data = this.state.seleccionarRendicion(id);
       if (data) {
-        // Normalizar tipos de gasto al cargar para que mat-select los reconozca
-        data.tickets.forEach(t => {
-          if (t.modificado.tipo_gasto) {
-            t.modificado.tipo_gasto = t.modificado.tipo_gasto.toUpperCase() as any;
+        this.cargarDatosRendicion(data);
+      } else {
+        // Soporte F5 y carga directa: consultar la API
+        this.rendicionesService.getRendicion(id).subscribe({
+          next: (r: IRendicion) => {
+            this.cargarDatosRendicion(r);
+          },
+          error: () => {
+            this.router.navigate(['/validador']);
           }
         });
-        this.rendicion.set(data);
-      } else {
-        this.router.navigate(['/validador/lista']);
       }
+    } else {
+      this.router.navigate(['/validador']);
     }
+  }
+
+  private cargarDatosRendicion(data: IRendicion): void {
+    data.tickets.forEach(t => {
+      if (t.modificado?.tipo_gasto) {
+        t.modificado.tipo_gasto = t.modificado.tipo_gasto.toUpperCase() as TipoGasto;
+      }
+    });
+    this.rendicion.set(data);
   }
 
   public parseDateStr(dateStr: string): Date {
@@ -718,8 +733,8 @@ export class DetalleRendicionPage implements OnInit {
     return d;
   }
 
-  updateDate(event: any, item: any) {
-    const date: Date = event.value;
+  updateDate(event: MatDatepickerInputEvent<Date>, item: IRendicionTicket): void {
+    const date = event.value;
     if (date) {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -728,11 +743,11 @@ export class DetalleRendicionPage implements OnInit {
     }
   }
 
-  fueModificado(item: any, campo: string): boolean {
+  fueModificado(item: IRendicionTicket, campo: string): boolean {
     if (!item || !item.ocr_original || !item.modificado) return false;
     
-    const valOriginal = item.ocr_original[campo];
-    const valModificado = item.modificado[campo];
+    const valOriginal = (item.ocr_original as unknown as Record<string, unknown>)[campo];
+    const valModificado = (item.modificado as unknown as Record<string, unknown>)[campo];
 
     // Si ambos son nulos o vacíos, no hay modificación
     if (!valOriginal && !valModificado) return false;
@@ -740,16 +755,15 @@ export class DetalleRendicionPage implements OnInit {
     // Comparación especial para fechas
     if (campo === 'fecha') {
       try {
-        const d1 = this.parseDateStr(valOriginal).getTime();
-        const d2 = this.parseDateStr(valModificado).getTime();
+        const d1 = this.parseDateStr(String(valOriginal || '')).getTime();
+        const d2 = this.parseDateStr(String(valModificado || '')).getTime();
         
-        // Si alguna fecha es inválida (NaN), no marcar como modificado a menos que la otra sí sea válida
         if (isNaN(d1) || isNaN(d2)) {
-            return isNaN(d1) !== isNaN(d2);
+          return isNaN(d1) !== isNaN(d2);
         }
         
         return d1 !== d2;
-      } catch (e) {
+      } catch {
         return false;
       }
     }
@@ -765,13 +779,12 @@ export class DetalleRendicionPage implements OnInit {
     const s1 = String(valOriginal || '').trim().toUpperCase();
     const s2 = String(valModificado || '').trim().toUpperCase();
     
-    // Si el original es nulo/vacío y el modificado también se considera vacío, no marcar
     if ((s1 === 'NULL' || s1 === '') && s2 === '') return false;
     
     return s1 !== s2;
   }
 
-  recalcularTotal() {
+  recalcularTotal(): void {
     const data = this.rendicion();
     if (!data) return;
     
@@ -779,7 +792,7 @@ export class DetalleRendicionPage implements OnInit {
     this.rendicion.update(r => r ? ({ ...r, total: nuevoTotal }) : undefined);
   }
 
-  verImagen(item: any) {
+  verImagen(item: IRendicionTicket): void {
     const imgUrl = item.imagen_base64 || item.url_imagen;
     if (imgUrl) {
       this.currentImageUrl.set(imgUrl);
@@ -787,35 +800,47 @@ export class DetalleRendicionPage implements OnInit {
     }
   }
 
-  closeModal() {
+  closeModal(): void {
     this.showModal.set(false);
   }
 
-  regresar() {
-    this.router.navigate(['/validador/lista']);
+  regresar(): void {
+    this.router.navigate(['/validador']);
   }
 
-  logout() {
+  logout(): void {
     this.auth.logout();
   }
 
-  aprobar() {
+  aprobar(): void {
     const data = this.rendicion();
     if (!data) return;
     
     data.estado = 'aprobada';
-    this.rendicionesService.actualizarRendicion(data).subscribe(() => {
-      this.router.navigate(['/validador/lista']);
+    this.rendicionesService.actualizarRendicion(data).subscribe({
+      next: () => {
+        this.router.navigate(['/validador']);
+      },
+      error: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Error al aprobar la rendición';
+        alert(msg);
+      }
     });
   }
 
-  rechazar() {
+  rechazar(): void {
     const data = this.rendicion();
     if (!data) return;
     
     data.estado = 'rechazada';
-    this.rendicionesService.actualizarRendicion(data).subscribe(() => {
-      this.router.navigate(['/validador/lista']);
+    this.rendicionesService.actualizarRendicion(data).subscribe({
+      next: () => {
+        this.router.navigate(['/validador']);
+      },
+      error: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Error al rechazar la rendición';
+        alert(msg);
+      }
     });
   }
 }

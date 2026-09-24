@@ -8,9 +8,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   providedIn: 'root'
 })
 export class ValidadorStateService {
-  private rendicionesService = inject(RendicionesService);
-  private localDb = inject(LocalDbService);
-  private snackBar = inject(MatSnackBar);
+  private readonly rendicionesService = inject(RendicionesService);
+  private readonly localDb = inject(LocalDbService);
+  private readonly snackBar = inject(MatSnackBar);
 
   private readonly _rendiciones = signal<IRendicion[]>([]);
   readonly rendiciones = computed(() => this._rendiciones());
@@ -22,33 +22,41 @@ export class ValidadorStateService {
   readonly error = computed(() => this._error());
 
   constructor() {
-    this.cargarDesdeLocal();
+    void this.cargarDesdeLocal();
   }
 
-  async cargarDesdeLocal() {
+  async cargarDesdeLocal(): Promise<IRendicion[]> {
     const localData = await this.localDb.obtenerRendiciones();
     if (localData && localData.length > 0) {
       this._rendiciones.set(localData);
     }
+    return localData;
   }
 
-  cargarRendiciones() {
+  cargarRendiciones(): void {
     this._loading.set(true);
     this.rendicionesService.getRendiciones().subscribe({
       next: async (data: IRendicion[]) => {
-        const list = data.map((r: IRendicion) => ({
-          ...r,
-          empresa: r.empresa || 'Empresa No Def.',
-          cantidad_tickets: r.cantidad_tickets || r.tickets?.length || 0,
-          fecha_recepcion: r.fecha_recepcion || new Date().toISOString()
-        }));
-        
-        this._rendiciones.set(list);
-        await this.localDb.guardarRendiciones(list);
-        this._loading.set(false);
+        try {
+          const list = data.map((r: IRendicion) => ({
+            ...r,
+            empresa: r.empresa || 'Empresa No Def.',
+            cantidad_tickets: r.cantidad_tickets || r.tickets?.length || 0,
+            fecha_recepcion: r.fecha_recepcion || new Date().toISOString()
+          }));
+          
+          this._rendiciones.set(list);
+          await this.localDb.guardarRendiciones(list);
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Error al persistir rendiciones localmente';
+          this._error.set(msg);
+        } finally {
+          this._loading.set(false);
+        }
       },
-      error: (err: Error) => {
-        this._error.set(err.message);
+      error: (err: HttpErrorResponse | Error) => {
+        const msg = err instanceof HttpErrorResponse ? `Error HTTP ${err.status}: ${err.message}` : err.message;
+        this._error.set(msg);
         this._loading.set(false);
       }
     });
@@ -58,46 +66,52 @@ export class ValidadorStateService {
     return this._rendiciones().find((r: IRendicion) => r.id === id);
   }
 
-  limpiarTodo() {
+  limpiarTodo(): void {
     this._loading.set(true);
     this.rendicionesService.limpiarRendiciones().subscribe({
       next: async () => {
-        this._rendiciones.set([]);
-        await this.localDb.guardarRendiciones([]);
-        this._loading.set(false);
+        try {
+          this._rendiciones.set([]);
+          await this.localDb.guardarRendiciones([]);
+        } finally {
+          this._loading.set(false);
+        }
       },
-      error: (err: Error) => {
+      error: (err: HttpErrorResponse | Error) => {
         this._error.set(err.message);
         this._loading.set(false);
       }
     });
   }
 
-  eliminarRendicion(id: string) {
+  eliminarRendicion(id: string): void {
     this._loading.set(true);
     this.rendicionesService.eliminarRendicion(id).subscribe({
       next: async () => {
-        const current = this._rendiciones();
-        const updated = current.filter(r => r.id !== id);
-        this._rendiciones.set(updated);
-        await this.localDb.guardarRendiciones(updated);
-        this._loading.set(false);
-        this.snackBar.open('Rendición eliminada con éxito', 'Cerrar', { duration: 3000 });
-      },
-      error: async (err: any) => {
-        // Si el error es 404, significa que ya se borró en el servidor (o se reinició)
-        // Por lo tanto, debemos borrarlo localmente para que no quede atascado.
-        if (err instanceof HttpErrorResponse && err.status === 404) {
+        try {
           const current = this._rendiciones();
           const updated = current.filter(r => r.id !== id);
           this._rendiciones.set(updated);
           await this.localDb.guardarRendiciones(updated);
+          this.snackBar.open('Rendición eliminada con éxito', 'Cerrar', { duration: 3000 });
+        } finally {
           this._loading.set(false);
-          this.snackBar.open('Rendición eliminada localmente (no se encontró en el servidor)', 'Cerrar', { duration: 3000 });
-        } else {
-          this._error.set(err.message);
+        }
+      },
+      error: async (err: HttpErrorResponse | Error) => {
+        try {
+          if (err instanceof HttpErrorResponse && err.status === 404) {
+            const current = this._rendiciones();
+            const updated = current.filter(r => r.id !== id);
+            this._rendiciones.set(updated);
+            await this.localDb.guardarRendiciones(updated);
+            this.snackBar.open('Rendición eliminada localmente (no se encontró en el servidor)', 'Cerrar', { duration: 3000 });
+          } else {
+            this._error.set(err.message);
+            this.snackBar.open('Error al eliminar la rendición: ' + err.message, 'Cerrar', { duration: 5000 });
+          }
+        } finally {
           this._loading.set(false);
-          this.snackBar.open('Error al eliminar la rendición: ' + err.message, 'Cerrar', { duration: 5000 });
         }
       }
     });

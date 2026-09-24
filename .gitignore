@@ -8,7 +8,7 @@ node_modules/
 dist/
 build/
 tmp/
-out-攜proc/
+out-tsc/
 
 .DS_Store
 Thumbs.db
@@ -21,4 +21,9 @@ logs/
 
 .env
 .env.*
+server/.env
+server/uploads/
+server/data/
+src/enviroments/enviroment.ts
+src/enviroments/enviroment.prod.ts
 .cache/

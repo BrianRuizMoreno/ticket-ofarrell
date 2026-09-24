@@ -7,8 +7,7 @@ export interface AppFeatures {
 export interface Environment {
   readonly production: boolean;
   readonly apiUrl: string;
-  readonly ocrWebhook: string;
-  readonly saveWebhook: string;
+  readonly rendicionesApiUrl: string;
   readonly serialId: string;
   readonly appName: string;
   readonly version: string;
