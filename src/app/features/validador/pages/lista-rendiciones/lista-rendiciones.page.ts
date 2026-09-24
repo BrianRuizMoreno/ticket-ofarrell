@@ -31,7 +31,7 @@ import { AuthService } from '../../../../core/services/auth.service';
       <header class="validador-header">
         <div class="header-content">
           <div class="header-branding">
-            <img src="https://physis.com.ar/wp-content/uploads/2025/02/physis.png" alt="Physis Logo" class="header-logo">
+            <img src="assets/logo-physis.png" alt="Physis Logo" class="header-logo">
             <div>
               <h1 class="header-title">Validación de Rendiciones</h1>
               <p class="header-subtitle">Pendientes de revisión</p>

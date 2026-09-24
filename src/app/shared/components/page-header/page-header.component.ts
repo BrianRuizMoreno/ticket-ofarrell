@@ -11,7 +11,7 @@ import { Component, ChangeDetectionStrategy, signal, Input, HostListener, Output
           <span class="material-icons">logout</span>
         </button>
       }
-      <img src="https://physis.com.ar/wp-content/uploads/2025/02/physis.png" alt="Physis Logo" class="logo">
+      <img src="assets/logo-physis.png" alt="Physis Logo" class="logo">
       <h1 class="app-title">{{ title }}</h1>
       <div class="network-status" [class.offline]="!isOnline()"></div>
     </header>
