@@ -42,6 +42,16 @@ services:
     ports:
       - "3000:3000"
 
+  # Frontend Dashboard Validator (Angular + Nginx)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: physis_validator_frontend
+    restart: always
+    ports:
+      - "8080:80"
+
 volumes:
   postgres_data:
   backend_data:
