@@ -65,7 +65,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ----------------------------------------------------
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
-    console.warn('⚠️ AVISO: GEMINI_API_KEY no está configurada en .env. El OCR responderá con error hasta que se configure.');
+    console.warn('[WARN] GEMINI_API_KEY no esta configurada en .env. El OCR respondera con error hasta que se configure.');
 }
 const genAI = new GoogleGenerativeAI(apiKey || 'DISABLED');
 
@@ -127,7 +127,7 @@ async function executeGeminiCascade(imagePart) {
 
     for (const modelName of models) {
         try {
-            console.log(`[OCR Backend] Invocando modelo: ${modelName}`);
+            console.log(`[INFO] [OCR Backend] Invocando modelo: ${modelName}`);
             const model = genAI.getGenerativeModel({
                 model: modelName,
                 generationConfig: {
@@ -142,11 +142,11 @@ async function executeGeminiCascade(imagePart) {
 
             if (text) {
                 const parsed = JSON.parse(text);
-                console.log(`[OCR Backend] ✅ Éxito con modelo ${modelName}`);
+                console.log(`[INFO] [OCR Backend] Exito con modelo ${modelName}`);
                 return parsed;
             }
         } catch (err) {
-            console.warn(`[OCR Backend] Fallo en modelo ${modelName}:`, err.message || err);
+            console.warn(`[WARN] [OCR Backend] Fallo en modelo ${modelName}:`, err.message || err);
             lastError = err;
         }
     }
@@ -188,7 +188,7 @@ app.post('/api/ai/analizar-ticket', upload.single('imagen'), async (req, res) =>
         const result = await executeGeminiCascade(imagePart);
         res.json(result);
     } catch (error) {
-        console.error('❌ Error en /api/ai/analizar-ticket:', error.message || error);
+        console.error('[ERROR] En /api/ai/analizar-ticket:', error.message || error);
         res.status(500).json({
             error: 'Error al procesar el comprobante con IA',
             details: IS_PROD ? undefined : (error.message || 'Error de procesamiento')
@@ -221,11 +221,11 @@ app.post('/api/rendiciones/recibir', async (req, res) => {
         };
 
         const saved = await db.saveRendicion(nuevaRendicion);
-        console.log(`[Rendición Recibida] ID: ${saved.id} - ${saved.tickets.length} tickets - Total: $${saved.total}`);
+        console.log(`[INFO] [Rendicion Recibida] ID: ${saved.id} - ${saved.tickets.length} tickets - Total: $${saved.total}`);
 
         res.json({ success: true, id: saved.id });
     } catch (error) {
-        console.error('❌ Error recibiendo rendición:', error);
+        console.error('[ERROR] Recibiendo rendicion:', error);
         res.status(500).json({
             error: 'Error al procesar la rendición',
             details: IS_PROD ? undefined : error.message
@@ -241,7 +241,7 @@ app.get('/api/rendiciones', async (req, res) => {
         const rendiciones = await db.getRendiciones();
         res.json(rendiciones);
     } catch (error) {
-        console.error('❌ Error listando rendiciones:', error);
+        console.error('[ERROR] Listando rendiciones:', error);
         res.status(500).json({ error: 'Error al obtener rendiciones' });
     }
 });
@@ -254,7 +254,7 @@ app.delete('/api/rendiciones/clear', async (req, res) => {
         await db.clearRendiciones();
         res.json({ success: true, message: 'Todas las rendiciones han sido eliminadas' });
     } catch (error) {
-        console.error('❌ Error vaciando rendiciones:', error);
+        console.error('[ERROR] Vaciando rendiciones:', error);
         res.status(500).json({ error: 'Error al eliminar rendiciones' });
     }
 });
@@ -272,7 +272,7 @@ app.get('/api/rendiciones/:id', async (req, res) => {
             res.status(404).json({ success: false, message: 'Rendición no encontrada' });
         }
     } catch (error) {
-        console.error('❌ Error obteniendo rendición:', error);
+        console.error('[ERROR] Obteniendo rendicion:', error);
         res.status(500).json({ error: 'Error al obtener la rendición' });
     }
 });
@@ -299,7 +299,7 @@ app.patch('/api/rendiciones/:id', async (req, res) => {
             res.status(404).json({ success: false, message: 'Rendición no encontrada' });
         }
     } catch (error) {
-        console.error('❌ Error actualizando rendición:', error);
+        console.error('[ERROR] Actualizando rendicion:', error);
         res.status(500).json({ error: 'Error al actualizar rendición' });
     }
 });
@@ -317,7 +317,7 @@ app.delete('/api/rendiciones/:id', async (req, res) => {
             res.status(404).json({ success: false, message: 'Rendición no encontrada' });
         }
     } catch (error) {
-        console.error('❌ Error eliminando rendición:', error);
+        console.error('[ERROR] Eliminando rendicion:', error);
         res.status(500).json({ error: 'Error al eliminar rendición' });
     }
 });
@@ -327,12 +327,12 @@ app.delete('/api/rendiciones/:id', async (req, res) => {
     try {
         await db.initDb();
         app.listen(PORT, () => {
-            console.log(`🚀 Backend de ScannerValidator corriendo en puerto ${PORT}`);
-            console.log(`📡 Modo de almacenamiento: ${db.isUsingPostgres() ? 'PostgreSQL' : 'JSON local'}`);
-            console.log(`🔒 Orígenes CORS permitidos: ${allowedOrigins.join(', ')}`);
+            console.log(`[INFO] Backend de ScannerValidator activo en puerto ${PORT}`);
+            console.log(`[INFO] Modo de almacenamiento: ${db.isUsingPostgres() ? 'PostgreSQL' : 'JSON local'}`);
+            console.log(`[INFO] Origenes CORS autorizados: ${allowedOrigins.join(', ')}`);
         });
     } catch (err) {
-        console.error('❌ Error fatal iniciando el servidor:', err);
+        console.error('[FATAL] Error iniciando el servidor:', err);
         process.exit(1);
     }
 })();

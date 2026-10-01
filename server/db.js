@@ -64,7 +64,7 @@ async function initDb() {
 
             // Probar conexión
             const client = await pool.connect();
-            console.log('🐘 Conectado exitosamente a PostgreSQL.');
+            console.log('[INFO] Conectado exitosamente a PostgreSQL.');
 
             // Crear esquema de tablas
             await client.query(`
@@ -105,14 +105,14 @@ async function initDb() {
 
             client.release();
             usePostgres = true;
-            console.log('✅ Tablas de PostgreSQL verificadas y listas.');
+            console.log('[INFO] Tablas de PostgreSQL verificadas y listas.');
             return;
         } catch (err) {
-            console.warn('⚠️ No se pudo conectar a PostgreSQL (' + err.message + '). Activando almacenamiento local JSON en disco.');
+            console.warn('[WARN] No se pudo conectar a PostgreSQL (' + err.message + '). Activando almacenamiento local JSON en disco.');
             usePostgres = false;
         }
     } else {
-        console.log('ℹ️ No hay DATABASE_URL configurada. Usando almacenamiento JSON local.');
+        console.log('[INFO] No hay DATABASE_URL configurada. Usando almacenamiento JSON local.');
         usePostgres = false;
     }
 

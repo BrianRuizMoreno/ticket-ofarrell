@@ -1,23 +1,27 @@
-# Plan de Implementación: Scanner & Validator Autónomo
+# Plan de Implementacion: Scanner y Validator Autonomo
 
 ## Objetivo
-Transicionar de una arquitectura basada en dependencias (n8n) a una solución local-first, robusta y escalable, utilizando IA híbrida (Gemini 2.5 Flash + WebLLM/Gemma 2B).
+Transicionar de una arquitectura basada en dependencias externas a una solucion local-first, robusta y escalable, utilizando inferencia en servidor con Gemini 2.5 y persistencia relacional en PostgreSQL.
 
-## Estado Actual: Fase 1 Completada ✅
-- Backend Operativo (localhost:3000)
-- Integración Gemini 2.5 Flash Exitosa (Extracción avanzada)
-- Scanner redirigido al servidor local
-- Validator refactorizado con grilla técnica de alta densidad
+## Estado de Fases
 
-## Fase 2: Soporte Offline e IA Local (WebLLM) 🟡
-Integrar `@mlc-ai/web-llm` para permitir el procesamiento de tickets cuando no hay conexión a internet.
-- Modelo: **Gemma 2B** (Ligero y optimizado para CPU/GPU integrada).
-- Fallback: Si Gemini falla o no hay red, se usa Gemma. Si Gemma falla, carga manual.
+### Fase 1: Backend Operativo [ESTADO: COMPLETADO]
+- Backend operativo en Node.js 22 Express.
+- Integracion Gemini 2.5 Flash y 2.5 Flash-Lite con Structured Outputs.
+- Scanner redirigido a endpoints seguros de produccion.
+- Validator refactorizado con grilla tecnica y visor de auditoria.
 
-## Fase 3: Sincronización y Resiliencia (IndexedDB) ⚪
-Implementar una cola de sincronización para que los tickets procesados offline se envíen automáticamente al backend al recuperar la red.
+### Fase 2: Soporte Offline y Resiliencia Local [ESTADO: COMPLETADO]
+- Almacenamiento local seguro en IndexedDB para comprobantes escaneados.
+- Persistencia volatil de sesion en sessionStorage.
+- Manejo de contingencia por desconexion de red.
 
-## Fase 4: Pulido y PWA ⚪
-- Optimización de Service Workers.
-- UI de gestión de modelos (Download Manager).
-- Auditoría final de seguridad y rendimiento.
+### Fase 3: Sincronizacion y Base de Datos [ESTADO: COMPLETADO]
+- Persistencia en base de datos PostgreSQL 16 con transacciones SQL.
+- Desacoplamiento de imagenes en disco bajo servidor para preservar memoria RAM.
+- Reintentos estrictos de 3 ciclos para peticiones HTTP criticas.
+
+### Fase 4: PWA y Despliegue [ESTADO: COMPLETADO]
+- Modo Zoneless nativo de Angular 22 sin Zone.js.
+- Contenedores Docker multi-stage con Nginx para despliegue en Dokploy.
+- Auditoria de calidad y seguridad concluida.

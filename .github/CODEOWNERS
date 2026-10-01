@@ -1,0 +1,16 @@
+# Asignacion de propietarios de codigo para ScannerValidator
+# Cada cambio requiere aprobacion de los revisores designados segun el area.
+
+* @BrianRuizMoreno
+
+# Frontend Dashboard
+/src/ @BrianRuizMoreno
+
+# Backend API y Persistencia
+/server/ @BrianRuizMoreno
+
+# Configuracion de Despliegue y Orquestacion
+/.github/ @BrianRuizMoreno
+/docker-compose.yml @BrianRuizMoreno
+/Dockerfile @BrianRuizMoreno
+/nginx.conf @BrianRuizMoreno

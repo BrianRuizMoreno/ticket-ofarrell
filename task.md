@@ -1,26 +1,24 @@
-# Lista de Tareas (TODO)
+# Registro de Tareas
 
-## Fase 1: Backend & Cloud AI ✅
-- [x] Crear servidor Node.js (Express) para orquestación.
-- [x] Configurar endpoint `/api/ai/analizar-ticket` con **Gemini 2.5 Flash**.
+## Fase 1: Backend y Cloud AI [COMPLETADO]
+- [x] Crear servidor Node.js (Express) para orquestacion.
+- [x] Configurar endpoint `/api/ai/analizar-ticket` con Gemini 2.5 Flash y Gemini 2.5 Flash-Lite.
 - [x] Crear endpoint `/api/rendiciones/recibir` para ingesta de datos.
-- [x] Actualizar frontend Scanner para apuntar al nuevo backend.
-- [x] Refactorizar Validator para mostrar nuevos campos (IVA, Nro Op, CUIT).
+- [x] Actualizar frontend Scanner para apuntar al backend de produccion.
+- [x] Refactorizar Validator para visualizar campos fiscales (IVA, Nro Op, CUIT).
 
-## Fase 2: Soporte Offline e IA Local (WebLLM) ✅
-- [x] Instalar `@mlc-ai/web-llm` en el proyecto Scanner.
-- [x] Implementar `LocalAI.service.ts` para carga y ejecución de modelo nativo de visión (LLaVA/Phi-3.5-vision).
-- [x] Crear `SyncQueueService` (OfflineStorage) con IndexedDB para almacenamiento offline.
-- [x] Implementar lógica de conmutación (Online -> Gemini | Offline -> Vision Model).
-- [x] Añadir UI de "Download Manager" para modelos locales y remover dependencia de Tesseract.js.
+## Fase 2: Soporte Offline y Almacenamiento Local [COMPLETADO]
+- [x] Crear SyncQueueService con IndexedDB para almacenamiento offline.
+- [x] Garantizar persistencia volátil de sesión y ciclo de vida seguro.
+- [x] Eliminar dependencias innecesarias de visión pesada cliente.
 
-## Fase 3: Sincronización ✅
-- [x] Endpoint en backend para recibir paquetes de sincronización.
+## Fase 3: Sincronizacion y Persistencia [COMPLETADO]
+- [x] Endpoint en backend para recibir paquetes de sincronizacion.
 - [x] Manejo de duplicados en la ingesta.
-- [x] Notificaciones Push/Toast de sincronización exitosa (SnackBar).
+- [x] Notificaciones de sincronizacion exitosa mediante SnackBar.
+- [x] Implementacion de base de datos PostgreSQL con transacciones y fallback a JSON.
 
-## Fase 4: UX & PWA ✅
-- [x] Mejorar el indicador de conexión (Offline Badge / Banner).
-- [x] Optimizar la comunicación con el usuario (Anonimización de IA).
-- [x] Pruebas finales de sincronización automática.
-- [x] Implementar polling en Validator para tiempo real.
+## Fase 4: UX y PWA [COMPLETADO]
+- [x] Mejorar el indicador de conexion (Badge de conectividad).
+- [x] Optimizacion de bundle eliminando Zone.js en modo Zoneless.
+- [x] Pruebas finales de sincronizacion y resolucion de bugs de enrutamiento.
