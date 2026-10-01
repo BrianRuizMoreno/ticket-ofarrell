@@ -1,5 +1,6 @@
 # Physis Scanner PWA
 
+[![Latest Release](https://img.shields.io/badge/Release-v2.0.0-007ACC?style=flat-square)](https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v2.0.0)
 [![Angular Version](https://img.shields.io/badge/Angular-22.1.7-DD0031?style=flat-square&logo=angular&logoColor=white)](https://angular.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![PWA](https://img.shields.io/badge/PWA-Compliant-5A0FC8?style=flat-square)](https://web.dev/progressive-web-apps/)
@@ -96,4 +97,5 @@ Para detalles exhaustivos sobre la solucion, consulte la suite documental en la 
 - [Manual de Usuario](docs/USER_MANUAL.md): Guia paso a paso para la captura, revision y envio de rendiciones.
 - [Guia de Despliegue](docs/DEPLOYMENT.md): Procedimiento de compilacion contenerizada, variables de entorno y configuracion en Dokploy.
 - [Guia de Contribucion](CONTRIBUTING.md): Flujo de trabajo Git, reglas de estilo y aprobacion de cambios.
-- [Historial de Cambios](CHANGELOG.md): Registro de versiones bajo Semantic Versioning 2.0.0.
+- [Historial de Cambios](CHANGELOG.md): Registro cronologico de versiones bajo Semantic Versioning 2.0.0.
+- [Notas de la Version Oficial v2.0.0](https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v2.0.0): Distribucion oficial y artefactos compilados.

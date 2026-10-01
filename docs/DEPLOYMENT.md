@@ -28,7 +28,7 @@ export const environment: IEnvironment = {
   apiUrl: 'https://api.autoscaner.pro/api',
   n8nWebhookUrl: 'https://n8n.tuempresa.com/webhook/tickets-upload',
   enableDebugLogging: false,
-  offlineCacheVersion: 'v1.2.3'
+  offlineCacheVersion: 'v2.0.0'
 };
 ```
 

@@ -6,11 +6,13 @@ El formato se basa estrictamente en [Keep a Changelog](https://keepachangelog.co
 
 ---
 
-## [1.2.3] - 2026-10-01
+## [2.0.0] - 2026-10-01
 
 ### Anadido
-- Script de auditoria de calidad y gobernanza de codigo (`scripts/guardian.js`) con ejecucion automatizada mediante `npm run guardian`.
-- Flujo de Integracion Continua automatizado en GitHub Actions (`.github/workflows/ci.yml`) para validacion de calidad y compilacion.
+- Actualizacion mayor a la arquitectura moderna de **Angular 22** con deteccion de cambios Zoneless (`provideZonelessChangeDetection`) y reactividad granular con Signals.
+- Modernizacion a **TypeScript 5.9 / 6.0** con tipado riguroso y erradicacion total de tipos debiles (`any`).
+- Script de auditoria y gobernanza empresarial (`scripts/guardian.js`) ejecutable mediante `npm run guardian`.
+- Flujo de Integracion Continua automatizado en GitHub Actions (`.github/workflows/ci.yml`).
 - Plantillas estandarizadas para Pull Requests (`.github/PULL_REQUEST_TEMPLATE.md`) y reporte de incidencias (`.github/ISSUE_TEMPLATE/`).
 - Definicion de propietarios de codigo (`.github/CODEOWNERS`).
 - Suite documental tecnica y operativa completa: `docs/ARCHITECTURE.md`, `docs/COMPONENTS.md`, `docs/USER_MANUAL.md` y `docs/DEPLOYMENT.md`.
@@ -20,9 +22,18 @@ El formato se basa estrictamente en [Keep a Changelog](https://keepachangelog.co
 - Normalizacion de la documentacion central en `README.md` a codificacion UTF-8 estandar y eliminacion total de caracteres informales o emojis.
 - Refuerzo de la politica estricta de 3 reintentos para transacciones de red criticas hacia el orquestador n8n.
 - Garantia de ciclo de vida seguro de sesion manteniendo credenciales y tokens exclusivamente en memoria volatil (`sessionStorage`).
+- Eliminacion de endpoints obsoletos y actualizacion del dominio a `autoscaner.pro`.
 
 ### Corregido
-- Eliminacion de tipos debiles residuales y aplicacion de tipado estricto sin excepciones en toda la estructura de servicios y componentes.
+- Blindaje del interceptor de autenticacion y eliminacion de claves API expuestas en el cliente.
+- Saneamiento de codigo sin usar, imports huerfanos y optimizacion de paquetes de despliegue.
+
+---
+
+## [1.2.3] - 2026-09-24
+
+### Modificado
+- Ajustes preliminares de empaquetado y preparacion de la arquitectura para gobernanza enterprise.
 
 ---
 
@@ -61,8 +72,9 @@ El formato se basa estrictamente en [Keep a Changelog](https://keepachangelog.co
 - Integracion con orquestador n8n para procesamiento de comprobantes.
 - Soporte basico de instalacion como PWA.
 
-[1.2.3]: https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v1.2.3
-[1.2.2]: https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v1.2.2
-[1.2.1]: https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v1.2.1
-[1.2.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v1.2.0
+[2.0.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/compare/v1.2.3...v2.0.0
+[1.2.3]: https://github.com/BrianRuizMoreno/ticket-ofarrell/compare/v1.2.2...v1.2.3
+[1.2.2]: https://github.com/BrianRuizMoreno/ticket-ofarrell/compare/v1.2.1...v1.2.2
+[1.2.1]: https://github.com/BrianRuizMoreno/ticket-ofarrell/compare/v1.2.0...v1.2.1
+[1.2.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/compare/v1.0.0...v1.2.0
 [1.0.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v1.0.0
