@@ -1,6 +1,6 @@
 # Physis ScannerValidator - Portal de Auditoria y API de Validacion
 
-[![Latest Release](https://img.shields.io/badge/Release-v2.0.0-007ACC?style=flat-square)](https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v2.0.0)
+[![Latest Release](https://img.shields.io/badge/Release-v2.0.0-007ACC?style=flat-square)](https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v2.0.0-validator)
 [![Angular Version](https://img.shields.io/badge/Angular-22.1.7-DD0031?style=flat-square&logo=angular&logoColor=white)](https://angular.dev/)
 [![Node.js](https://img.shields.io/badge/Node.js-22.x-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-4.18.2-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
@@ -117,4 +117,4 @@ Consulte la documentacion detallada en la carpeta `docs/`:
 - [Guia de Despliegue](docs/DEPLOYMENT.md): Orquestacion en Dokploy, configuracion de base de datos y respaldos.
 - [Guia de Contribucion](CONTRIBUTING.md): Politicas de codigo, Conventional Commits y aprobaciones.
 - [Historial de Cambios](CHANGELOG.md): Registro cronologico de entregas bajo SemVer 2.0.0.
-- [Notas de la Version Oficial v2.0.0](https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v2.0.0): Distribucion oficial y artefactos compilados.
+- [Notas de la Version Oficial v2.0.0](https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v2.0.0-validator): Distribucion oficial y artefactos compilados.

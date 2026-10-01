@@ -49,6 +49,6 @@ El formato se basa estrictamente en [Keep a Changelog](https://keepachangelog.co
 - Servidor basico Express con persistencia preliminar.
 - Interfaz Angular inicial para listado de comprobantes.
 
-[2.0.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/compare/v1.1.0...v2.0.0
+[2.0.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v2.0.0-validator
 [1.1.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v1.0.0
