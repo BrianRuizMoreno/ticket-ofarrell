@@ -9,6 +9,8 @@ El formato se basa estrictamente en [Keep a Changelog](https://keepachangelog.co
 ## [2.0.0] - 2026-10-01
 
 ### Anadido
+- Actualizacion mayor a la arquitectura moderna de **Angular 22** con deteccion de cambios Zoneless y reactividad con Signals.
+- Actualizacion a **TypeScript 5.9 / 6.0** con tipado riguroso y erradicacion total de tipos debiles (`any`).
 - Script de auditoria y gobernanza empresarial (`scripts/guardian.js`) ejecutable mediante `npm run guardian`.
 - Flujo automatizado de Integracion Continua con GitHub Actions (`.github/workflows/ci.yml`).
 - Plantillas estandarizadas para Pull Requests (`.github/PULL_REQUEST_TEMPLATE.md`) y reporte de incidencias (`.github/ISSUE_TEMPLATE/`).
@@ -47,6 +49,6 @@ El formato se basa estrictamente en [Keep a Changelog](https://keepachangelog.co
 - Servidor basico Express con persistencia preliminar.
 - Interfaz Angular inicial para listado de comprobantes.
 
-[2.0.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v2.0.0
-[1.1.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v1.1.0
+[2.0.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/compare/v1.1.0...v2.0.0
+[1.1.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/BrianRuizMoreno/ticket-ofarrell/releases/tag/v1.0.0

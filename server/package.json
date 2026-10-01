@@ -1,6 +1,6 @@
 {
   "name": "scanner-validator-backend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "API para ScannerValidator",
   "main": "index.js",
   "scripts": {
