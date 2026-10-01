@@ -1,0 +1,15 @@
+# Asignacion de propietarios de codigo para Scanner
+# Cada cambio requiere aprobacion de los revisores designados segun el area.
+
+* @BrianRuizMoreno
+
+# Componentes de Nucleo y Servicios
+/src/app/core/ @BrianRuizMoreno
+
+# Almacenamiento e Integraciones
+/src/app/core/services/ @BrianRuizMoreno
+
+# Configuracion de Despliegue y CI/CD
+/.github/ @BrianRuizMoreno
+/Dockerfile @BrianRuizMoreno
+/nginx.conf @BrianRuizMoreno

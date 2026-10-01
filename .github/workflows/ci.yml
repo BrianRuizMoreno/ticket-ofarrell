@@ -1,0 +1,33 @@
+name: Integracion Continua - Scanner PWA
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  governance-and-build:
+    name: Verificacion de Gobernanza y Compilacion
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar auditoria Guardian (Gobernanza y Emojis)
+        run: npm run guardian
+
+      - name: Compilar aplicacion PWA en modo produccion
+        run: npm run build:prod
