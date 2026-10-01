@@ -27,3 +27,4 @@ server/data/
 src/enviroments/enviroment.ts
 src/enviroments/enviroment.prod.ts
 .cache/
+*.zip
